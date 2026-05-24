@@ -4,7 +4,8 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>b8478ca7-ae65-4025-a503-a375a9dd05aa</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>GPS_Hunt.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,11 +22,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="GPS_Hunt.py" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="admin.html" />
     <Content Include="admin.js" />
+    <Content Include="config.js" />
     <Content Include="firebase.js" />
     <Content Include="game.js" />
     <Content Include="index.html" />
