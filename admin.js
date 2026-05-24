@@ -180,4 +180,4 @@ const Admin = (() => {
   return { init, move, remove };
 })();
 
-document.addEventListener('DOMContentLoaded', Admin.init);
+document.addEventListener('DOMContentLoaded', () => {}); // init called by admin.html loader
