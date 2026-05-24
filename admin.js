@@ -85,13 +85,13 @@ const Admin = (() => {
 	}, { enableHighAccuracy: true, timeout: 10000 });
   }
 
-  /* ── Read Firebase config from form ──────────────────────────────── */
+  /* ── Read Firebase config from form (falls back to config.js) ───── */
   function getFirebaseConfig() {
-	const apiKey      = el('fb-api-key')?.value.trim();
-	const authDomain  = el('fb-auth-domain')?.value.trim();
-	const databaseURL = el('fb-db-url')?.value.trim();
-	const projectId   = el('fb-project-id')?.value.trim();
-	if (!apiKey || !databaseURL) return null;
+	const apiKey      = el('fb-api-key')?.value.trim()      || GPS_HUNT_CONFIG?.firebase?.apiKey;
+	const authDomain  = el('fb-auth-domain')?.value.trim()  || GPS_HUNT_CONFIG?.firebase?.authDomain;
+	const databaseURL = el('fb-db-url')?.value.trim()       || GPS_HUNT_CONFIG?.firebase?.databaseURL;
+	const projectId   = el('fb-project-id')?.value.trim()   || GPS_HUNT_CONFIG?.firebase?.projectId;
+	if (!apiKey || !databaseURL || apiKey === 'YOUR_API_KEY') return null;
 	return { apiKey, authDomain, databaseURL, projectId };
   }
 
@@ -153,8 +153,23 @@ const Admin = (() => {
 	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  /* ── Auto-fill form from config.js if values present ─────────────── */
+  function prefillFromConfig() {
+    const cfg = typeof GPS_HUNT_CONFIG !== 'undefined' ? GPS_HUNT_CONFIG : null;
+    if (!cfg) return;
+    if (cfg.firebase?.apiKey      && cfg.firebase.apiKey !== 'YOUR_API_KEY') {
+      el('fb-api-key')?.setAttribute('value', cfg.firebase.apiKey);
+      el('fb-api-key').value = cfg.firebase.apiKey;
+    }
+    if (cfg.firebase?.authDomain)  { el('fb-auth-domain').value = cfg.firebase.authDomain; }
+    if (cfg.firebase?.databaseURL) { el('fb-db-url').value      = cfg.firebase.databaseURL; }
+    if (cfg.firebase?.projectId)   { el('fb-project-id').value  = cfg.firebase.projectId; }
+    if (cfg.defaultGameTitle)      { el('inp-game-title').placeholder = cfg.defaultGameTitle; }
+  }
+
   /* ── Init ─────────────────────────────────────────────────────────── */
   function init() {
+    prefillFromConfig();
 	el('add-btn')?.addEventListener('click', addLocation);
 	el('gps-btn')?.addEventListener('click', useMyLocation);
 	el('generate-btn')?.addEventListener('click', generate);
