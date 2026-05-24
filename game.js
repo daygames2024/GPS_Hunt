@@ -76,6 +76,12 @@ const Game = (() => {
 		claimedAt: null,
 	  }));
 
+	  // Set game title on setup screen
+	  if (isNew && json.gameTitle) {
+		const titleEl = el('game-title-display');
+		if (titleEl) titleEl.textContent = json.gameTitle;
+	  }
+
 	  // Initialise Firebase if config present
 	  if (isNew && json.firebase && json.gameId && typeof FirebaseDB !== 'undefined') {
 		firebaseReady = FirebaseDB.init(json.firebase, json.gameId);
@@ -232,7 +238,7 @@ const Game = (() => {
 	// Build summary
 	const ul = el('final-summary');
 	ul.innerHTML = locations.map((loc, i) =>
-	  `<li>${i+1}. <strong>${loc.name || 'Location '+(i+1)}</strong> — ${loc.claimed ? '🏆 '+loc.claimedBy+' @ '+loc.claimedAt : '⏭️ skipped'}</li>`
+	  `<li>${i+1}. <strong>${loc.name || 'Location '+(i+1)}</strong> — ${loc.claimed ? '🏆 '+loc.claimedBy+' @ '+loc.claimedAt : '❌ not claimed'}</li>`
 	).join('');
   }
 
@@ -276,13 +282,6 @@ const Game = (() => {
 	// Wire buttons
 	el('start-btn')?.addEventListener('click', startGame);
 	el('claim-btn')?.addEventListener('click', claimLocation);
-	el('next-btn')?.addEventListener('click', () => {
-	  currentIdx++;
-	  if (currentIdx >= locations.length) { endGame(); return; }
-	  updatePlayScreen();
-	  showScreen('screen-play');
-	  if (firebaseReady) FirebaseDB.pushUpdate(currentIdx, locations.length, Infinity, 'playing');
-	});
   }
 
   return { init };

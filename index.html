@@ -24,7 +24,7 @@
   <!-- ── Screen 2: Team setup ──────────────────────────────────────── -->
   <section class="screen" id="screen-setup">
 	<div style="font-size:3.5rem">🏁</div>
-	<h1>GPS Hunt</h1>
+	<h1 id="game-title-display">GPS Hunt</h1>
 	<h3>Hunt loaded — <span id="location-count">0</span> location(s)</h3>
 
 	<div class="card">
@@ -74,9 +74,6 @@
 
 	<!-- Claim button — visible only when within 15 m -->
 	<button class="btn-success hidden" id="claim-btn">📍 CLAIM THIS LOCATION!</button>
-
-	<!-- Skip button -->
-	<button class="btn-secondary" id="next-btn" style="margin-top:.25rem">⏭️ Skip to next</button>
 
 	<!-- ── Live Leaderboard ───────────────────────────────────────── -->
 	<div id="inline-leaderboard" style="width:100%;max-width:420px;margin-top:1.5rem">
