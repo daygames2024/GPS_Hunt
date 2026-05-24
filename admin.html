@@ -8,31 +8,6 @@
   <style>
 	body { background: var(--bg); overflow-y: auto; }
 	h1 span { color: var(--accent); }
-	details > summary {
-	  cursor: pointer;
-	  padding: .75rem 1rem;
-	  background: var(--surface);
-	  border: 1px solid var(--border);
-	  border-radius: .75rem;
-	  color: var(--muted);
-	  font-size: .9rem;
-	  list-style: none;
-	  display: flex;
-	  justify-content: space-between;
-	  align-items: center;
-	}
-	details > summary::after { content: '▾'; }
-	details[open] > summary::after { content: '▴'; }
-	details[open] > summary { border-radius: .75rem .75rem 0 0; border-bottom: none; }
-	details .details-body {
-	  border: 1px solid var(--border);
-	  border-top: none;
-	  border-radius: 0 0 .75rem .75rem;
-	  padding: 1.25rem;
-	  display: flex;
-	  flex-direction: column;
-	  gap: .9rem;
-	}
   </style>
 </head>
 <body>
@@ -94,39 +69,6 @@
 	  <button class="btn-primary" id="add-btn" style="max-width:unset">➕ Add Location</button>
 	</div>
   </div>
-
-  <!-- ── Firebase config (collapsible) ─────────────────────────────── -->
-  <details>
-	<summary>🔥 Firebase Config <small style="color:var(--accent)">(optional — enables live leaderboard)</small></summary>
-	<div class="details-body">
-	  <p style="font-size:.82rem;max-width:unset">
-		Create a free Firebase project at
-		<a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">console.firebase.google.com</a>,
-		enable <strong>Realtime Database</strong>, set rules to public (see README),
-		then paste your config values below.
-	  </p>
-	  <div>
-		<label for="fb-api-key">API Key</label>
-		<input type="text" id="fb-api-key" placeholder="AIzaSy…" autocomplete="off" />
-	  </div>
-	  <div>
-		<label for="fb-auth-domain">Auth Domain</label>
-		<input type="text" id="fb-auth-domain" placeholder="your-project.firebaseapp.com" />
-	  </div>
-	  <div>
-		<label for="fb-db-url">Database URL <span style="color:var(--hot)">*required</span></label>
-		<input type="text" id="fb-db-url" placeholder="https://your-project-default-rtdb.firebaseio.com" />
-	  </div>
-	  <div>
-		<label for="fb-project-id">Project ID</label>
-		<input type="text" id="fb-project-id" placeholder="your-project" />
-	  </div>
-	  <p style="font-size:.78rem;color:var(--muted)">
-		ℹ️ These values are embedded in the game URL. Only share the link with trusted participants.
-		Set your database rules to allow read/write only during the hunt window.
-	  </p>
-	</div>
-  </details>
 
   <!-- ── Generate ───────────────────────────────────────────────────── -->
   <button class="btn-success" id="generate-btn" style="max-width:unset;width:100%">🔗 Generate Team Link & QR Code</button>
