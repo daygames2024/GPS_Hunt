@@ -26,8 +26,11 @@
   <ItemGroup>
     <Content Include="admin.html" />
     <Content Include="admin.js" />
+    <Content Include="firebase.js" />
     <Content Include="game.js" />
     <Content Include="index.html" />
+    <Content Include="leaderboard.html" />
+    <Content Include="leaderboard.js" />
     <Content Include="README.md" />
     <Content Include="style.css" />
   </ItemGroup>

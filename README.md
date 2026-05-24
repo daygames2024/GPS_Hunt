@@ -78,16 +78,81 @@ Game data (coordinates + clues) is base64-encoded into the URL `#hash`. Each tea
 ## File Structure
 
 ```
-index.html   — Player game UI
-admin.html   — Hunt Master setup
-style.css    — Shared dark theme + temperature animations
-game.js      — GPS, Hot/Cold engine, compass, claim logic
-admin.js     — Location builder, URL encoder, QR generator
-README.md    — This file
+index.html       — Player game UI
+admin.html       — Hunt Master setup + Firebase config
+leaderboard.html — Live multiplayer leaderboard (big screen)
+style.css        — Shared dark theme + temperature animations
+game.js          — GPS, Hot/Cold engine, compass, claim logic, Firebase push
+admin.js         — Location builder, URL encoder, QR generator
+firebase.js      — Firebase Realtime Database wrapper
+leaderboard.js   — Leaderboard renderer and Firebase subscriber
+README.md        — This file
 ```
 
 ---
 
-## Privacy
+## 🔥 Multiplayer Leaderboard (Firebase Setup)
 
-No data leaves the browser. Coordinates live only in the URL. No tracking, no analytics, no backend.
+The leaderboard is **optional** but highly recommended for competitive hunts. It requires a free Firebase project.
+
+### 1 — Create a Firebase project
+
+1. Go to [console.firebase.google.com](https://console.firebase.google.com) and click **Add project**.
+2. Give it a name (e.g. `gps-hunt`) and follow the setup wizard (Analytics optional).
+
+### 2 — Enable Realtime Database
+
+1. In the left sidebar go to **Build → Realtime Database**.
+2. Click **Create Database** → choose a region → start in **Test mode** (you'll tighten rules after).
+
+### 3 — Set Database Rules
+
+In the **Rules** tab paste:
+
+```json
+{
+  "rules": {
+    "hunts": {
+      "$gameId": {
+        "teams": {
+          ".read": true,
+          ".write": true
+        }
+      }
+    }
+  }
+}
+```
+
+> For production you can restrict by time or add a secret `gameId` as a passphrase.
+
+### 4 — Get your config
+
+1. In Firebase console go to ⚙️ **Project settings**.
+2. Under **Your apps** click **Add app → Web** (</> icon).
+3. Register the app — you'll see a `firebaseConfig` block. You need:
+   - `apiKey`
+   - `authDomain`
+   - `databaseURL`
+   - `projectId`
+
+### 5 — Enter config in admin.html
+
+1. Open `admin.html` → expand the **🔥 Firebase Config** section.
+2. Paste in the four values.
+3. Click **Generate Team Link & QR Code**.
+4. You'll now see a second **🏆 Leaderboard Link** — open that on a big screen or TV.
+
+### How it works
+
+- Each team's GPS position is pushed to Firebase every ~5 seconds.
+- The leaderboard page subscribes in real-time and re-sorts teams by:
+  1. ✅ Finished teams first
+  2. Teams furthest through the route
+  3. Within the same checkpoint — whoever is **closest** ranks higher
+- The distance indicator uses the same Hot/Cold colour scale as the player view.
+- Teams that go offline are shown faded but stay on the board.
+
+---
+
+

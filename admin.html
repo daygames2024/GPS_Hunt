@@ -8,25 +8,62 @@
   <style>
 	body { background: var(--bg); overflow-y: auto; }
 	h1 span { color: var(--accent); }
+	details > summary {
+	  cursor: pointer;
+	  padding: .75rem 1rem;
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: .75rem;
+	  color: var(--muted);
+	  font-size: .9rem;
+	  list-style: none;
+	  display: flex;
+	  justify-content: space-between;
+	  align-items: center;
+	}
+	details > summary::after { content: '▾'; }
+	details[open] > summary::after { content: '▴'; }
+	details[open] > summary { border-radius: .75rem .75rem 0 0; border-bottom: none; }
+	details .details-body {
+	  border: 1px solid var(--border);
+	  border-top: none;
+	  border-radius: 0 0 .75rem .75rem;
+	  padding: 1.25rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: .9rem;
+	}
   </style>
 </head>
 <body>
 
 <div class="admin-wrap">
 
+  <!-- Header -->
   <div style="text-align:center">
 	<div style="font-size:3rem">⚙️</div>
 	<h1>GPS Hunt <span>Hunt Master</span></h1>
 	<p>Build your hunt route, then share the generated link or QR code with teams.</p>
   </div>
 
-  <!-- ── Location list ─────────────────────────────────────────────── -->
+  <!-- ── Game settings ──────────────────────────────────────────────── -->
+  <div class="card">
+	<h2 style="margin-bottom:1rem">🎮 Game Settings</h2>
+	<div class="form-group">
+	  <div>
+		<label for="inp-game-title">Hunt Name (shown on leaderboard)</label>
+		<input type="text" id="inp-game-title" placeholder="e.g. Summer Scavenger Hunt 2025" maxlength="60" />
+	  </div>
+	</div>
+  </div>
+
+  <!-- ── Location list ──────────────────────────────────────────────── -->
   <div>
 	<h2 style="margin-bottom:.75rem">📍 Locations</h2>
 	<div id="location-list"></div>
   </div>
 
-  <!-- ── Add location form ─────────────────────────────────────────── -->
+  <!-- ── Add location form ──────────────────────────────────────────── -->
   <div class="card">
 	<h2 style="margin-bottom:1rem">➕ Add Location</h2>
 	<div class="form-group">
@@ -58,12 +95,48 @@
 	</div>
   </div>
 
-  <!-- ── Generate ──────────────────────────────────────────────────── -->
+  <!-- ── Firebase config (collapsible) ─────────────────────────────── -->
+  <details>
+	<summary>🔥 Firebase Config <small style="color:var(--accent)">(optional — enables live leaderboard)</small></summary>
+	<div class="details-body">
+	  <p style="font-size:.82rem;max-width:unset">
+		Create a free Firebase project at
+		<a href="https://console.firebase.google.com" target="_blank" style="color:var(--accent)">console.firebase.google.com</a>,
+		enable <strong>Realtime Database</strong>, set rules to public (see README),
+		then paste your config values below.
+	  </p>
+	  <div>
+		<label for="fb-api-key">API Key</label>
+		<input type="text" id="fb-api-key" placeholder="AIzaSy…" autocomplete="off" />
+	  </div>
+	  <div>
+		<label for="fb-auth-domain">Auth Domain</label>
+		<input type="text" id="fb-auth-domain" placeholder="your-project.firebaseapp.com" />
+	  </div>
+	  <div>
+		<label for="fb-db-url">Database URL <span style="color:var(--hot)">*required</span></label>
+		<input type="text" id="fb-db-url" placeholder="https://your-project-default-rtdb.firebaseio.com" />
+	  </div>
+	  <div>
+		<label for="fb-project-id">Project ID</label>
+		<input type="text" id="fb-project-id" placeholder="your-project" />
+	  </div>
+	  <p style="font-size:.78rem;color:var(--muted)">
+		ℹ️ These values are embedded in the game URL. Only share the link with trusted participants.
+		Set your database rules to allow read/write only during the hunt window.
+	  </p>
+	</div>
+  </details>
+
+  <!-- ── Generate ───────────────────────────────────────────────────── -->
   <button class="btn-success" id="generate-btn" style="max-width:unset;width:100%">🔗 Generate Team Link & QR Code</button>
 
-  <!-- ── Output ────────────────────────────────────────────────────── -->
+  <!-- ── Output ─────────────────────────────────────────────────────── -->
   <div id="output-box">
-	<h2>Share with Teams</h2>
+
+	<!-- Team link -->
+	<h2>📱 Team Link</h2>
+	<p style="max-width:unset;font-size:.85rem">Share this with all teams. Everyone uses the same link.</p>
 
 	<div>
 	  <label>Game URL (tap to select all)</label>
@@ -77,13 +150,29 @@
 	  <img id="qr-img" src="" alt="QR code" style="width:200px;height:200px;border-radius:.75rem;background:white;padding:8px" />
 	</div>
 
-	<p style="font-size:.8rem">
+	<!-- Leaderboard section — shown only when Firebase is configured -->
+	<div id="lb-section" class="hidden" style="display:flex;flex-direction:column;gap:1rem;border-top:1px solid var(--border);padding-top:1.5rem;margin-top:.5rem">
+	  <h2>🏆 Leaderboard Link</h2>
+	  <p style="max-width:unset;font-size:.85rem">
+		Open this on a big screen, TV, or the Hunt Master's phone to watch teams in real-time.
+	  </p>
+	  <div>
+		<label>Leaderboard URL (tap to select all)</label>
+		<input type="text" id="lb-url" readonly onclick="this.select()" />
+	  </div>
+	  <button class="btn-secondary" id="copy-lb-btn" style="max-width:unset;width:100%">📋 Copy Leaderboard Link</button>
+	  <div style="text-align:center">
+		<p style="margin-bottom:.75rem">Or scan:</p>
+		<img id="lb-qr-img" src="" alt="Leaderboard QR" style="width:180px;height:180px;border-radius:.75rem;background:white;padding:8px" />
+	  </div>
+	</div>
+
+	<p style="font-size:.8rem;color:var(--muted)">
 	  ⚠️ Regenerate the link any time you add, remove or reorder locations.
-	  Old links will still work but won't reflect changes.
 	</p>
   </div>
 
-  <!-- ── Back link ─────────────────────────────────────────────────── -->
+  <!-- Back link -->
   <a href="index.html"
 	 style="display:block;text-align:center;color:var(--muted);font-size:.85rem;text-decoration:none;margin-top:1rem">
 	← Back to player view
@@ -91,6 +180,9 @@
 
 </div>
 
+<!-- Firebase SDK (compat v9) — needed only for admin preview; teams load it via game.js -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

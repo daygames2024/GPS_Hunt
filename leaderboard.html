@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="refresh" content="60" />
+  <title>GPS Hunt — Leaderboard</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+	body { overflow-y: auto; }
+
+	.lb-wrap {
+	  max-width: 700px;
+	  margin: 0 auto;
+	  padding: 2rem 1rem 4rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1.5rem;
+	}
+
+	.lb-header {
+	  text-align: center;
+	  display: flex;
+	  flex-direction: column;
+	  gap: .5rem;
+	}
+
+	/* ── Table ────────────────────────────────────────────────────── */
+	.lb-table-wrap {
+	  overflow-x: auto;
+	  border-radius: 1rem;
+	  border: 1px solid var(--border);
+	}
+
+	table {
+	  width: 100%;
+	  border-collapse: collapse;
+	  font-size: .95rem;
+	}
+
+	thead th {
+	  background: var(--surface);
+	  padding: .9rem 1rem;
+	  text-align: left;
+	  color: var(--muted);
+	  font-weight: 600;
+	  font-size: .78rem;
+	  text-transform: uppercase;
+	  letter-spacing: .06em;
+	  border-bottom: 1px solid var(--border);
+	}
+
+	tbody tr {
+	  border-bottom: 1px solid var(--border);
+	  transition: background .2s;
+	}
+	tbody tr:last-child { border-bottom: none; }
+	tbody tr:hover { background: var(--surface); }
+
+	tbody td {
+	  padding: 1rem;
+	  vertical-align: middle;
+	}
+
+	.lb-rank { font-size: 1.4rem; width: 3rem; text-align: center; }
+	.lb-team { font-weight: 700; }
+	.lb-loc  { color: var(--muted); font-size: .85rem; }
+	.lb-dist { font-size: 1.05rem; }
+	.lb-age  { color: var(--muted); font-size: .78rem; white-space: nowrap; }
+
+	/* ── Legend ───────────────────────────────────────────────────── */
+	.legend {
+	  display: flex;
+	  flex-wrap: wrap;
+	  gap: .5rem .75rem;
+	  justify-content: center;
+	  font-size: .78rem;
+	}
+	.legend-item { display: flex; align-items: center; gap: .3rem; color: var(--muted); }
+	.legend-dot  { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+	/* ── Footer ───────────────────────────────────────────────────── */
+	.lb-footer {
+	  text-align: center;
+	  color: var(--muted);
+	  font-size: .78rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: .4rem;
+	}
+
+	/* ── Pulse for live indicator ─────────────────────────────────── */
+	.live-dot {
+	  display: inline-block;
+	  width: 8px; height: 8px;
+	  border-radius: 50%;
+	  background: #43a047;
+	  margin-right: .4rem;
+	  animation: pulse 2s infinite;
+	}
+  </style>
+</head>
+<body>
+
+<div class="lb-wrap">
+
+  <!-- Header -->
+  <div class="lb-header">
+	<div style="font-size:3rem">🏆</div>
+	<h1 id="game-title">GPS Hunt</h1>
+	<h3>Live Leaderboard</h3>
+	<p><span class="live-dot"></span>Updates automatically as teams move</p>
+  </div>
+
+  <!-- Table -->
+  <div class="lb-table-wrap">
+	<table>
+	  <thead>
+		<tr>
+		  <th style="text-align:center">Rank</th>
+		  <th>Team</th>
+		  <th>Location</th>
+		  <th>Distance to Next</th>
+		  <th>Last Update</th>
+		</tr>
+	  </thead>
+	  <tbody id="leaderboard-body">
+		<tr>
+		  <td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">
+			Connecting…
+		  </td>
+		</tr>
+	  </tbody>
+	</table>
+  </div>
+
+  <!-- Ranking legend -->
+  <div class="legend">
+	<div class="legend-item"><div class="legend-dot" style="background:var(--freezing)"></div> &gt;500m</div>
+	<div class="legend-item"><div class="legend-dot" style="background:var(--cold)"></div> 200–500m</div>
+	<div class="legend-item"><div class="legend-dot" style="background:var(--cool)"></div> 100–200m</div>
+	<div class="legend-item"><div class="legend-dot" style="background:var(--warm)"></div> 40–100m</div>
+	<div class="legend-item"><div class="legend-dot" style="background:var(--hot)"></div> 15–40m</div>
+	<div class="legend-item"><div class="legend-dot" style="background:var(--burning)"></div> &lt;15m 🔥</div>
+  </div>
+
+  <!-- Ranking explanation -->
+  <div class="card" style="text-align:left;font-size:.85rem;color:var(--muted);line-height:1.7">
+	<strong style="color:var(--text)">How ranking works:</strong><br>
+	1. ✅ Finished teams rank above all others<br>
+	2. Teams further through the route rank higher<br>
+	3. Within the same location, whoever is <em>closest</em> ranks higher<br>
+	4. Offline teams are shown faded
+  </div>
+
+  <!-- Footer -->
+  <div class="lb-footer">
+	<span id="last-updated"></span>
+	<span>Page auto-refreshes every 60 s as a fallback</span>
+	<a href="index.html" style="color:var(--accent)">← Back to player view</a>
+  </div>
+
+</div>
+
+<!-- Firebase SDK (compat v9) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="firebase.js"></script>
+<script src="leaderboard.js"></script>
+</body>
+</html>

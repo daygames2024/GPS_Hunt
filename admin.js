@@ -2,10 +2,11 @@
 
 const Admin = (() => {
   let locations = []; // [{name, lat, lng, clue}]
+  let gameId    = null; // generated once per session
 
   const el = id => document.getElementById(id);
 
-  /* ── Render location list ────────────────────────────────────────── */
+  /* ── Render location list ─────────────────────────────────────────── */
   function renderList() {
 	const list = el('location-list');
 	if (!list) return;
@@ -31,14 +32,14 @@ const Admin = (() => {
 	`).join('');
   }
 
-  /* ── Add location from form ──────────────────────────────────────── */
+  /* ── Add location from form ───────────────────────────────────────── */
   function addLocation() {
 	const name = el('inp-name').value.trim();
 	const lat  = parseFloat(el('inp-lat').value);
 	const lng  = parseFloat(el('inp-lng').value);
 	const clue = el('inp-clue').value.trim();
 
-	if (!name)             { alert('Please enter a location name.'); return; }
+	if (!name)                    { alert('Please enter a location name.'); return; }
 	if (isNaN(lat) || isNaN(lng)) { alert('Please enter valid coordinates.'); return; }
 	if (lat < -90  || lat > 90)   { alert('Latitude must be between -90 and 90.'); return; }
 	if (lng < -180 || lng > 180)  { alert('Longitude must be between -180 and 180.'); return; }
@@ -50,11 +51,11 @@ const Admin = (() => {
   }
 
   function clearForm() {
-	['inp-name','inp-lat','inp-lng','inp-clue'].forEach(id => { el(id).value = ''; });
+	['inp-name', 'inp-lat', 'inp-lng', 'inp-clue'].forEach(id => { el(id).value = ''; });
 	el('inp-name').focus();
   }
 
-  /* ── Move / remove ──────────────────────────────────────────────── */
+  /* ── Move / remove ────────────────────────────────────────────────── */
   function move(i, dir) {
 	const j = i + dir;
 	if (j < 0 || j >= locations.length) return;
@@ -70,7 +71,7 @@ const Admin = (() => {
 	hideOutput();
   }
 
-  /* ── Try to fill lat/lng from device GPS ───────────────────────── */
+  /* ── Use device GPS for coordinates ──────────────────────────────── */
   function useMyLocation() {
 	if (!navigator.geolocation) { alert('Geolocation not available.'); return; }
 	el('gps-btn').textContent = '📡 Getting…';
@@ -84,23 +85,55 @@ const Admin = (() => {
 	}, { enableHighAccuracy: true, timeout: 10000 });
   }
 
-  /* ── Generate game URL + QR ─────────────────────────────────────── */
+  /* ── Read Firebase config from form ──────────────────────────────── */
+  function getFirebaseConfig() {
+	const apiKey      = el('fb-api-key')?.value.trim();
+	const authDomain  = el('fb-auth-domain')?.value.trim();
+	const databaseURL = el('fb-db-url')?.value.trim();
+	const projectId   = el('fb-project-id')?.value.trim();
+	if (!apiKey || !databaseURL) return null;
+	return { apiKey, authDomain, databaseURL, projectId };
+  }
+
+  /* ── Generate game URL + QR ───────────────────────────────────────── */
   function generate() {
 	if (locations.length === 0) { alert('Add at least one location first.'); return; }
 
-	const payload = btoa(JSON.stringify(locations));
-	const base    = location.href.replace(/admin\.html.*$/, 'index.html');
-	const url     = `${base}#${payload}`;
+	// One stable gameId per admin session
+	if (!gameId) gameId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-	el('game-url').value = url;
-	el('qr-img').src     = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
-	el('qr-img').alt     = 'QR code for game link';
+	const firebaseConfig = getFirebaseConfig();
+	const gameTitle      = el('inp-game-title')?.value.trim() || 'GPS Hunt';
+	const base           = location.href.replace(/admin\.html.*$/, '');
+
+	// ── Team (player) URL ──────────────────────────────────────────
+	const payload = { locations, gameId, gameTitle, ...(firebaseConfig ? { firebase: firebaseConfig } : {}) };
+	const encoded = btoa(JSON.stringify(payload));
+	const gameUrl = `${base}index.html#${encoded}`;
+
+	el('game-url').value = gameUrl;
+	el('qr-img').src     = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(gameUrl)}`;
+	el('qr-img').alt     = 'QR code for team game link';
+
+	// ── Leaderboard URL (only if Firebase configured) ──────────────
+	const lbSection = el('lb-section');
+	if (lbSection) {
+	  if (firebaseConfig) {
+		const lbPayload = btoa(JSON.stringify({ firebase: firebaseConfig, gameId, gameTitle }));
+		const lbUrl     = `${base}leaderboard.html?game=${lbPayload}`;
+		el('lb-url').value  = lbUrl;
+		el('lb-qr-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(lbUrl)}`;
+		lbSection.classList.remove('hidden');
+	  } else {
+		lbSection.classList.add('hidden');
+	  }
+	}
 
 	el('output-box').classList.add('visible');
 	el('output-box').scrollIntoView({ behavior: 'smooth' });
   }
 
-  /* ── Copy URL to clipboard ──────────────────────────────────────── */
+  /* ── Copy helpers ─────────────────────────────────────────────────── */
   function copyUrl() {
 	const val = el('game-url').value;
 	if (!val) return;
@@ -115,21 +148,31 @@ const Admin = (() => {
 	el('output-box').classList.remove('visible');
   }
 
-  /* ── Helpers ────────────────────────────────────────────────────── */
+  /* ── Helpers ──────────────────────────────────────────────────────── */
   function escHtml(str) {
-	return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
-  /* ── Init ───────────────────────────────────────────────────────── */
+  /* ── Init ─────────────────────────────────────────────────────────── */
   function init() {
 	el('add-btn')?.addEventListener('click', addLocation);
 	el('gps-btn')?.addEventListener('click', useMyLocation);
 	el('generate-btn')?.addEventListener('click', generate);
 	el('copy-btn')?.addEventListener('click', copyUrl);
 
-	// Allow Enter in lat/lng to advance
-	el('inp-lat')?.addEventListener('keydown', e => { if(e.key==='Enter') el('inp-lng').focus(); });
-	el('inp-lng')?.addEventListener('keydown', e => { if(e.key==='Enter') el('inp-clue').focus(); });
+	el('copy-lb-btn')?.addEventListener('click', () => {
+	  const val = el('lb-url')?.value;
+	  if (!val) return;
+	  navigator.clipboard.writeText(val).then(() => {
+		const btn = el('copy-lb-btn');
+		btn.textContent = '✅ Copied!';
+		setTimeout(() => { btn.textContent = '📋 Copy Leaderboard Link'; }, 2000);
+	  });
+	});
+
+	// Allow Enter in lat/lng to advance to next field
+	el('inp-lat')?.addEventListener('keydown', e => { if (e.key === 'Enter') el('inp-lng').focus(); });
+	el('inp-lng')?.addEventListener('keydown', e => { if (e.key === 'Enter') el('inp-clue').focus(); });
 
 	renderList();
   }

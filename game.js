@@ -2,12 +2,13 @@
 
 const Game = (() => {
   /* ── State ──────────────────────────────────────────────────────── */
-  let locations   = [];   // [{lat, lng, clue, name, claimed, claimedBy, claimedAt}]
-  let teamName    = '';
-  let currentIdx  = 0;
-  let watchId     = null;
-  let lastPos     = null;
-  let heading     = null; // degrees from north (device compass)
+  let locations    = [];   // [{lat, lng, clue, name, claimed, claimedBy, claimedAt}]
+  let teamName     = '';
+  let currentIdx   = 0;
+  let watchId      = null;
+  let lastPos      = null;
+  let heading      = null; // degrees from north (device compass)
+  let firebaseReady = false; // true once Firebase is initialised
 
   /* ── DOM refs ───────────────────────────────────────────────────── */
   const screens    = {};
@@ -62,12 +63,24 @@ const Game = (() => {
 	  const raw = location.hash.slice(1);
 	  if (!raw) return false;
 	  const json = JSON.parse(atob(raw));
-	  locations = json.map(loc => ({
+
+	  // New format: {locations, firebase, gameId, gameTitle}
+	  // Old format (array): backwards-compatible
+	  const isNew = !Array.isArray(json);
+	  const locs  = isNew ? json.locations : json;
+
+	  locations = locs.map(loc => ({
 		...loc,
 		claimed: false,
 		claimedBy: null,
 		claimedAt: null,
 	  }));
+
+	  // Initialise Firebase if config present
+	  if (isNew && json.firebase && json.gameId && typeof FirebaseDB !== 'undefined') {
+		firebaseReady = FirebaseDB.init(json.firebase, json.gameId);
+	  }
+
 	  return locations.length > 0;
 	} catch {
 	  return false;
@@ -141,6 +154,11 @@ const Game = (() => {
 	const dist   = haversine(lastPos.latitude, lastPos.longitude, target.lat, target.lng);
 	const bear   = bearing(lastPos.latitude, lastPos.longitude, target.lat, target.lng);
 	updateIndicators(dist, bear);
+
+	// Push to leaderboard
+	if (firebaseReady) {
+	  FirebaseDB.pushUpdate(currentIdx, locations.length, dist, 'playing');
+	}
   }
 
   function onGpsError(err) {
@@ -175,6 +193,11 @@ const Game = (() => {
 	el('claim-btn').classList.add('hidden');
 	renderDots();
 
+	// Push claimed state
+	if (firebaseReady) {
+	  FirebaseDB.pushUpdate(currentIdx, locations.length, 0, 'claimed');
+	}
+
 	// Show claimed screen briefly
 	el('claimed-team').textContent  = teamName;
 	el('claimed-loc').textContent   = loc.name || `Location ${currentIdx + 1}`;
@@ -188,6 +211,9 @@ const Game = (() => {
 	  } else {
 		updatePlayScreen();
 		showScreen('screen-play');
+		if (firebaseReady) {
+		  FirebaseDB.pushUpdate(currentIdx, locations.length, Infinity, 'playing');
+		}
 	  }
 	}, 3500);
   }
@@ -195,6 +221,7 @@ const Game = (() => {
   /* ── End game ───────────────────────────────────────────────────── */
   function endGame() {
 	if (watchId !== null) navigator.geolocation.clearWatch(watchId);
+	if (firebaseReady) FirebaseDB.pushUpdate(locations.length, locations.length, 0, 'finished');
 	showScreen('screen-complete');
 	el('final-team').textContent = teamName;
 
@@ -209,6 +236,9 @@ const Game = (() => {
   function startGame() {
 	teamName = (el('team-name-input')?.value || '').trim();
 	if (!teamName) { alert('Please enter your team name.'); return; }
+
+	// Register team in Firebase
+	if (firebaseReady) FirebaseDB.registerTeam(teamName);
 
 	currentIdx = 0;
 	updatePlayScreen();
@@ -247,6 +277,7 @@ const Game = (() => {
 	  if (currentIdx >= locations.length) { endGame(); return; }
 	  updatePlayScreen();
 	  showScreen('screen-play');
+	  if (firebaseReady) FirebaseDB.pushUpdate(currentIdx, locations.length, Infinity, 'playing');
 	});
   }
 
