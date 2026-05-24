@@ -1,0 +1,140 @@
+/* ── GPS Hunt — Admin / Hunt Master Logic ─────────────────────────── */
+
+const Admin = (() => {
+  let locations = []; // [{name, lat, lng, clue}]
+
+  const el = id => document.getElementById(id);
+
+  /* ── Render location list ────────────────────────────────────────── */
+  function renderList() {
+	const list = el('location-list');
+	if (!list) return;
+
+	if (locations.length === 0) {
+	  list.innerHTML = '<p style="color:var(--muted);text-align:center">No locations yet. Add one below.</p>';
+	  return;
+	}
+
+	list.innerHTML = locations.map((loc, i) => `
+	  <div class="loc-item">
+		<div class="loc-item-info">
+		  <strong>${i + 1}. ${escHtml(loc.name || 'Unnamed')}</strong>
+		  <small>${loc.lat}, ${loc.lng}</small><br>
+		  <small style="font-style:italic">${escHtml(loc.clue || 'No clue')}</small>
+		</div>
+		<div class="loc-item-actions">
+		  <button class="btn-secondary" onclick="Admin.move(${i}, -1)" ${i===0?'disabled':''}>↑</button>
+		  <button class="btn-secondary" onclick="Admin.move(${i},  1)" ${i===locations.length-1?'disabled':''}>↓</button>
+		  <button class="btn-danger"    onclick="Admin.remove(${i})">✕</button>
+		</div>
+	  </div>
+	`).join('');
+  }
+
+  /* ── Add location from form ──────────────────────────────────────── */
+  function addLocation() {
+	const name = el('inp-name').value.trim();
+	const lat  = parseFloat(el('inp-lat').value);
+	const lng  = parseFloat(el('inp-lng').value);
+	const clue = el('inp-clue').value.trim();
+
+	if (!name)             { alert('Please enter a location name.'); return; }
+	if (isNaN(lat) || isNaN(lng)) { alert('Please enter valid coordinates.'); return; }
+	if (lat < -90  || lat > 90)   { alert('Latitude must be between -90 and 90.'); return; }
+	if (lng < -180 || lng > 180)  { alert('Longitude must be between -180 and 180.'); return; }
+
+	locations.push({ name, lat, lng, clue });
+	renderList();
+	clearForm();
+	hideOutput();
+  }
+
+  function clearForm() {
+	['inp-name','inp-lat','inp-lng','inp-clue'].forEach(id => { el(id).value = ''; });
+	el('inp-name').focus();
+  }
+
+  /* ── Move / remove ──────────────────────────────────────────────── */
+  function move(i, dir) {
+	const j = i + dir;
+	if (j < 0 || j >= locations.length) return;
+	[locations[i], locations[j]] = [locations[j], locations[i]];
+	renderList();
+	hideOutput();
+  }
+
+  function remove(i) {
+	if (!confirm(`Remove "${locations[i].name}"?`)) return;
+	locations.splice(i, 1);
+	renderList();
+	hideOutput();
+  }
+
+  /* ── Try to fill lat/lng from device GPS ───────────────────────── */
+  function useMyLocation() {
+	if (!navigator.geolocation) { alert('Geolocation not available.'); return; }
+	el('gps-btn').textContent = '📡 Getting…';
+	navigator.geolocation.getCurrentPosition(pos => {
+	  el('inp-lat').value = pos.coords.latitude.toFixed(7);
+	  el('inp-lng').value = pos.coords.longitude.toFixed(7);
+	  el('gps-btn').textContent = '📡 Use My GPS';
+	}, err => {
+	  el('gps-btn').textContent = '📡 Use My GPS';
+	  alert('Could not get location: ' + err.message);
+	}, { enableHighAccuracy: true, timeout: 10000 });
+  }
+
+  /* ── Generate game URL + QR ─────────────────────────────────────── */
+  function generate() {
+	if (locations.length === 0) { alert('Add at least one location first.'); return; }
+
+	const payload = btoa(JSON.stringify(locations));
+	const base    = location.href.replace(/admin\.html.*$/, 'index.html');
+	const url     = `${base}#${payload}`;
+
+	el('game-url').value = url;
+	el('qr-img').src     = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(url)}`;
+	el('qr-img').alt     = 'QR code for game link';
+
+	el('output-box').classList.add('visible');
+	el('output-box').scrollIntoView({ behavior: 'smooth' });
+  }
+
+  /* ── Copy URL to clipboard ──────────────────────────────────────── */
+  function copyUrl() {
+	const val = el('game-url').value;
+	if (!val) return;
+	navigator.clipboard.writeText(val).then(() => {
+	  const btn = el('copy-btn');
+	  btn.textContent = '✅ Copied!';
+	  setTimeout(() => { btn.textContent = '📋 Copy Link'; }, 2000);
+	});
+  }
+
+  function hideOutput() {
+	el('output-box').classList.remove('visible');
+  }
+
+  /* ── Helpers ────────────────────────────────────────────────────── */
+  function escHtml(str) {
+	return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  /* ── Init ───────────────────────────────────────────────────────── */
+  function init() {
+	el('add-btn')?.addEventListener('click', addLocation);
+	el('gps-btn')?.addEventListener('click', useMyLocation);
+	el('generate-btn')?.addEventListener('click', generate);
+	el('copy-btn')?.addEventListener('click', copyUrl);
+
+	// Allow Enter in lat/lng to advance
+	el('inp-lat')?.addEventListener('keydown', e => { if(e.key==='Enter') el('inp-lng').focus(); });
+	el('inp-lng')?.addEventListener('keydown', e => { if(e.key==='Enter') el('inp-clue').focus(); });
+
+	renderList();
+  }
+
+  return { init, move, remove };
+})();
+
+document.addEventListener('DOMContentLoaded', Admin.init);

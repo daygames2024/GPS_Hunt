@@ -1,0 +1,268 @@
+/* ── GPS Hunt — Shared Styles ──────────────────────────────────────── */
+:root {
+  --bg: #0d0d0d;
+  --surface: #1a1a1a;
+  --border: #2e2e2e;
+  --text: #f0f0f0;
+  --muted: #888;
+  --accent: #4fc3f7;
+
+  /* temperature states */
+  --freezing: #1565c0;
+  --cold:     #42a5f5;
+  --cool:     #80deea;
+  --warm:     #ffb300;
+  --hot:      #ef5350;
+  --burning:  #ff1744;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ── Layout ─────────────────────────────────────────────────────────── */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 1.5rem 1rem;
+  gap: 1.25rem;
+  text-align: center;
+}
+.screen.active { display: flex; }
+
+/* ── Typography ─────────────────────────────────────────────────────── */
+h1 { font-size: 2rem; letter-spacing: .05em; }
+h2 { font-size: 1.4rem; }
+h3 { font-size: 1.1rem; color: var(--muted); font-weight: 500; }
+p  { line-height: 1.6; max-width: 36ch; color: var(--muted); }
+
+/* ── Cards ──────────────────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 420px;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+button, .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  border: none;
+  border-radius: .75rem;
+  padding: .85rem 2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  width: 100%;
+  max-width: 340px;
+}
+button:active { transform: scale(.97); opacity: .85; }
+
+.btn-primary   { background: var(--accent); color: #000; }
+.btn-success   { background: #43a047; color: #fff; }
+.btn-danger    { background: var(--hot); color: #fff; }
+.btn-secondary { background: var(--border); color: var(--text); }
+
+/* ── Forms ──────────────────────────────────────────────────────────── */
+label { display: block; text-align: left; font-size: .85rem; color: var(--muted); margin-bottom: .3rem; }
+
+input[type="text"],
+input[type="number"],
+textarea {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  padding: .7rem 1rem;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color .2s;
+}
+input:focus, textarea:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 80px; }
+
+.form-group { display: flex; flex-direction: column; gap: .9rem; }
+
+/* ── Temperature Indicator ──────────────────────────────────────────── */
+#temp-ring {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 8px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: border-color .6s, box-shadow .6s;
+  flex-shrink: 0;
+}
+
+#temp-label {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+  text-shadow: 0 0 20px currentColor;
+}
+
+#distance-label {
+  font-size: .85rem;
+  color: var(--muted);
+  margin-top: .25rem;
+}
+
+/* temperature colour classes */
+.temp-freezing { border-color: var(--freezing) !important; box-shadow: 0 0 30px var(--freezing); color: var(--freezing); }
+.temp-cold     { border-color: var(--cold)     !important; box-shadow: 0 0 30px var(--cold);     color: var(--cold);     }
+.temp-cool     { border-color: var(--cool)     !important; box-shadow: 0 0 30px var(--cool);     color: var(--cool);     }
+.temp-warm     { border-color: var(--warm)     !important; box-shadow: 0 0 30px var(--warm);     color: var(--warm);     }
+.temp-hot      { border-color: var(--hot)      !important; box-shadow: 0 0 30px var(--hot);      color: var(--hot);      }
+.temp-burning  { border-color: var(--burning)  !important; box-shadow: 0 0 35px var(--burning);  color: var(--burning);  animation: pulse 1s infinite; }
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 35px var(--burning); }
+  50%       { box-shadow: 0 0 60px var(--burning), 0 0 80px var(--burning); }
+}
+
+/* ── Compass Arrow ──────────────────────────────────────────────────── */
+#compass-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .5rem;
+}
+
+#compass-arrow {
+  font-size: 3rem;
+  transition: transform .4s ease;
+  display: block;
+  line-height: 1;
+}
+
+/* ── Clue box ───────────────────────────────────────────────────────── */
+#clue-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  padding: 1rem 1.25rem;
+  width: 100%;
+  max-width: 420px;
+  font-style: italic;
+  color: var(--muted);
+  font-size: .95rem;
+  line-height: 1.5;
+}
+
+/* ── Progress dots ──────────────────────────────────────────────────── */
+#progress-dots {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--border);
+  transition: background .3s;
+}
+.dot.done    { background: #43a047; }
+.dot.current { background: var(--accent); }
+
+/* ── Status pill ────────────────────────────────────────────────────── */
+#gps-status {
+  font-size: .78rem;
+  padding: .3rem .8rem;
+  border-radius: 99px;
+  background: var(--border);
+  color: var(--muted);
+}
+#gps-status.ok  { background: #1b5e20; color: #a5d6a7; }
+#gps-status.err { background: #b71c1c; color: #ef9a9a; }
+
+/* ── Winner banner ──────────────────────────────────────────────────── */
+#winner-banner {
+  font-size: 1.1rem;
+  color: #43a047;
+  font-weight: 600;
+  min-height: 1.5em;
+}
+
+/* ── Admin page ─────────────────────────────────────────────────────── */
+.admin-wrap {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+#location-list { display: flex; flex-direction: column; gap: 1rem; }
+
+.loc-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: .75rem;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+.loc-item-info { flex: 1; text-align: left; }
+.loc-item-info strong { display: block; margin-bottom: .25rem; }
+.loc-item-info small  { color: var(--muted); font-size: .8rem; }
+
+.loc-item-actions { display: flex; gap: .4rem; flex-shrink: 0; }
+.loc-item-actions button { max-width: unset; width: auto; padding: .45rem .9rem; font-size: .85rem; }
+
+/* ── Output box ─────────────────────────────────────────────────────── */
+#output-box {
+  display: none;
+  flex-direction: column;
+  gap: 1rem;
+}
+#output-box.visible { display: flex; }
+
+#game-url {
+  width: 100%;
+  font-size: .75rem;
+  word-break: break-all;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: .6rem;
+  padding: .7rem;
+  color: var(--muted);
+  user-select: all;
+}
+
+#qr-img { border-radius: .75rem; max-width: 200px; margin: 0 auto; display: block; }
+
+/* ── Utility ────────────────────────────────────────────────────────── */
+.hidden  { display: none !important; }
+.mt-sm   { margin-top: .5rem; }
+.row     { display: flex; gap: .75rem; }
+.row > * { flex: 1; }
+
+/* ── Scrollbar ──────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>GPS Hunt</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ── Screen 1: No game loaded ─────────────────────────────────── -->
+  <section class="screen" id="screen-no-game">
+	<div style="font-size:4rem">🗺️</div>
+	<h1>GPS Hunt</h1>
+	<p>No hunt is loaded. Ask your Hunt Master for the team link or scan the QR code.</p>
+	<a href="admin.html" class="btn btn-secondary" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;border-radius:.75rem;padding:.85rem 2rem;font-size:1rem;font-weight:600;max-width:340px;width:100%;">
+	  ⚙️ Hunt Master Setup
+	</a>
+  </section>
+
+  <!-- ── Screen 2: Team setup ──────────────────────────────────────── -->
+  <section class="screen" id="screen-setup">
+	<div style="font-size:3.5rem">🏁</div>
+	<h1>GPS Hunt</h1>
+	<h3>Hunt loaded — <span id="location-count">0</span> location(s)</h3>
+
+	<div class="card">
+	  <div class="form-group">
+		<div>
+		  <label for="team-name-input">Team Name</label>
+		  <input type="text" id="team-name-input" placeholder="e.g. The Explorers" maxlength="30" />
+		</div>
+		<button class="btn-primary" id="start-btn">🚀 Start Hunt!</button>
+	  </div>
+	</div>
+
+	<p>GPS permission will be requested when you start.<br>Keep the screen on during the hunt.</p>
+  </section>
+
+  <!-- ── Screen 3: Playing ─────────────────────────────────────────── -->
+  <section class="screen" id="screen-play">
+
+	<!-- Header row -->
+	<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px">
+	  <span id="gps-status">GPS…</span>
+	  <span style="font-size:.85rem;color:var(--muted)" id="location-counter">1 / ?</span>
+	</div>
+
+	<h2 id="location-name">Location</h2>
+
+	<!-- Progress dots -->
+	<div id="progress-dots"></div>
+
+	<!-- Hot / Cold ring -->
+	<div id="temp-ring">
+	  <span id="temp-label">…</span>
+	  <span id="distance-label"></span>
+	</div>
+
+	<!-- Compass arrow -->
+	<div id="compass-wrap">
+	  <span id="compass-arrow">⬆️</span>
+	  <small style="color:var(--muted);font-size:.78rem">Aim toward target</small>
+	</div>
+
+	<!-- Clue -->
+	<div id="clue-box">Loading clue…</div>
+
+	<!-- Winner banner (populated after someone claims) -->
+	<div id="winner-banner"></div>
+
+	<!-- Claim button — visible only when within 15 m -->
+	<button class="btn-success hidden" id="claim-btn">📍 CLAIM THIS LOCATION!</button>
+
+	<!-- Skip button -->
+	<button class="btn-secondary" id="next-btn" style="margin-top:.25rem">⏭️ Skip to next</button>
+
+  </section>
+
+  <!-- ── Screen 4: Location claimed ───────────────────────────────── -->
+  <section class="screen" id="screen-claimed">
+	<div style="font-size:5rem;animation:pulse 1s 3">🏆</div>
+	<h1>CLAIMED!</h1>
+	<div class="card">
+	  <p style="color:var(--text);font-size:1.1rem;margin-bottom:.5rem">
+		Team <strong id="claimed-team"></strong><br>
+		claimed <strong id="claimed-loc"></strong>
+	  </p>
+	  <p style="color:var(--muted);font-size:.85rem" id="claimed-time"></p>
+	  <p style="margin-top:.75rem;font-size:.8rem">📸 Screenshot this screen as proof!</p>
+	</div>
+	<p>Next location loading…</p>
+  </section>
+
+  <!-- ── Screen 5: Hunt complete ───────────────────────────────────── -->
+  <section class="screen" id="screen-complete">
+	<div style="font-size:4rem">🎉</div>
+	<h1>Hunt Complete!</h1>
+	<h3>Well done, team <span id="final-team"></span>!</h3>
+
+	<div class="card" style="text-align:left">
+	  <h3 style="margin-bottom:.75rem">Results</h3>
+	  <ul id="final-summary" style="list-style:none;display:flex;flex-direction:column;gap:.6rem;font-size:.9rem;color:var(--muted)"></ul>
+	</div>
+
+	<p>📸 Screenshot these results and share with your Hunt Master.</p>
+	<button class="btn-secondary" onclick="location.reload()">🔄 Play Again</button>
+  </section>
+
+  <script src="game.js"></script>
+</body>
+</html>

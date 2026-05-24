@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPS Hunt — Hunt Master</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+	body { background: var(--bg); overflow-y: auto; }
+	h1 span { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div class="admin-wrap">
+
+  <div style="text-align:center">
+	<div style="font-size:3rem">⚙️</div>
+	<h1>GPS Hunt <span>Hunt Master</span></h1>
+	<p>Build your hunt route, then share the generated link or QR code with teams.</p>
+  </div>
+
+  <!-- ── Location list ─────────────────────────────────────────────── -->
+  <div>
+	<h2 style="margin-bottom:.75rem">📍 Locations</h2>
+	<div id="location-list"></div>
+  </div>
+
+  <!-- ── Add location form ─────────────────────────────────────────── -->
+  <div class="card">
+	<h2 style="margin-bottom:1rem">➕ Add Location</h2>
+	<div class="form-group">
+
+	  <div>
+		<label for="inp-name">Location Name</label>
+		<input type="text" id="inp-name" placeholder="e.g. The Old Lighthouse" maxlength="60" />
+	  </div>
+
+	  <div class="row">
+		<div>
+		  <label for="inp-lat">Latitude</label>
+		  <input type="number" id="inp-lat" placeholder="51.5074" step="any" min="-90" max="90" />
+		</div>
+		<div>
+		  <label for="inp-lng">Longitude</label>
+		  <input type="number" id="inp-lng" placeholder="-0.1278" step="any" min="-180" max="180" />
+		</div>
+	  </div>
+
+	  <button class="btn-secondary" id="gps-btn" style="max-width:unset">📡 Use My GPS</button>
+
+	  <div>
+		<label for="inp-clue">Clue (shown to teams)</label>
+		<textarea id="inp-clue" placeholder="Look for something that hasn't moved in 200 years…"></textarea>
+	  </div>
+
+	  <button class="btn-primary" id="add-btn" style="max-width:unset">➕ Add Location</button>
+	</div>
+  </div>
+
+  <!-- ── Generate ──────────────────────────────────────────────────── -->
+  <button class="btn-success" id="generate-btn" style="max-width:unset;width:100%">🔗 Generate Team Link & QR Code</button>
+
+  <!-- ── Output ────────────────────────────────────────────────────── -->
+  <div id="output-box">
+	<h2>Share with Teams</h2>
+
+	<div>
+	  <label>Game URL (tap to select all)</label>
+	  <input type="text" id="game-url" readonly onclick="this.select()" />
+	</div>
+
+	<button class="btn-secondary" id="copy-btn" style="max-width:unset;width:100%">📋 Copy Link</button>
+
+	<div style="text-align:center">
+	  <p style="margin-bottom:.75rem">Or scan to open on a phone:</p>
+	  <img id="qr-img" src="" alt="QR code" style="width:200px;height:200px;border-radius:.75rem;background:white;padding:8px" />
+	</div>
+
+	<p style="font-size:.8rem">
+	  ⚠️ Regenerate the link any time you add, remove or reorder locations.
+	  Old links will still work but won't reflect changes.
+	</p>
+  </div>
+
+  <!-- ── Back link ─────────────────────────────────────────────────── -->
+  <a href="index.html"
+	 style="display:block;text-align:center;color:var(--muted);font-size:.85rem;text-decoration:none;margin-top:1rem">
+	← Back to player view
+  </a>
+
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
