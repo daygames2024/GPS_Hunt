@@ -157,7 +157,7 @@ const Admin = (() => {
   function prefillFromConfig() {
     const cfg = typeof GPS_HUNT_CONFIG !== 'undefined' ? GPS_HUNT_CONFIG : null;
     if (!cfg) return;
-    if (cfg.firebase?.apiKey      && cfg.firebase.apiKey !== 'YOUR_API_KEY') {
+    if (cfg.firebase?.apiKey && cfg.firebase.apiKey !== 'YOUR_API_KEY') {
       el('fb-api-key')?.setAttribute('value', cfg.firebase.apiKey);
       el('fb-api-key').value = cfg.firebase.apiKey;
     }
