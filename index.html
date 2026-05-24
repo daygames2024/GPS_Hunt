@@ -78,6 +78,29 @@
 	<!-- Skip button -->
 	<button class="btn-secondary" id="next-btn" style="margin-top:.25rem">⏭️ Skip to next</button>
 
+	<!-- ── Live Leaderboard ───────────────────────────────────────── -->
+	<div id="inline-leaderboard" style="width:100%;max-width:420px;margin-top:1.5rem">
+	  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem">
+		<h3 style="margin:0">🏆 Live Leaderboard</h3>
+		<span style="font-size:.72rem;color:var(--muted)" id="lb-updated"></span>
+	  </div>
+	  <div style="overflow-x:auto;border-radius:.75rem;border:1px solid var(--border)">
+		<table style="width:100%;border-collapse:collapse;font-size:.85rem">
+		  <thead>
+			<tr style="background:var(--surface)">
+			  <th style="padding:.6rem .75rem;text-align:center;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">#</th>
+			  <th style="padding:.6rem .75rem;text-align:left;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">Team</th>
+			  <th style="padding:.6rem .75rem;text-align:left;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">Loc</th>
+			  <th style="padding:.6rem .75rem;text-align:left;color:var(--muted);font-size:.72rem;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">Distance</th>
+			</tr>
+		  </thead>
+		  <tbody id="leaderboard-body">
+			<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem;font-size:.8rem">Waiting for teams…</td></tr>
+		  </tbody>
+		</table>
+	  </div>
+	</div>
+
   </section>
 
   <!-- ── Screen 4: Location claimed ───────────────────────────────── -->
@@ -114,6 +137,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="firebase.js"></script>
+  <script src="leaderboard.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

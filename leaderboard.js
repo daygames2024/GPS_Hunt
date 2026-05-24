@@ -54,7 +54,7 @@ const Leaderboard = (() => {
 
 	if (teams.length === 0) {
 	  board.innerHTML = `
-		<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">
+		<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:1rem;font-size:.8rem">
 		  Waiting for teams to join…
 		</td></tr>`;
 	  return;
@@ -65,28 +65,31 @@ const Leaderboard = (() => {
 	  const offline   = team.status === 'offline';
 	  const medal     = medals[i] || `${i + 1}`;
 	  const locLabel  = finished
-		? '✅ FINISHED'
-		: `${team.locationIndex + 1} / ${team.locationsTotal || '?'}`;
+		? '✅'
+		: `${team.locationIndex + 1}/${team.locationsTotal || '?'}`;
 	  const distLabel = finished ? '—' : fmtDist(team.distanceToNext);
 	  const colour    = finished ? '#43a047' : offline ? 'var(--muted)' : distColour(team.distanceToNext);
 	  const rowStyle  = offline ? 'opacity:.5' : '';
 
 	  return `
-		<tr style="${rowStyle}">
-		  <td class="lb-rank">${medal}</td>
-		  <td class="lb-team">${escHtml(team.name || 'Unknown')}</td>
-		  <td class="lb-loc">${locLabel}</td>
-		  <td class="lb-dist" style="color:${colour};font-weight:700">${distLabel}</td>
-		  <td class="lb-age">${fmtAge(team.lastSeen)}</td>
+		<tr style="${rowStyle};border-bottom:1px solid var(--border)">
+		  <td style="padding:.55rem .75rem;text-align:center;font-size:1.1rem">${medal}</td>
+		  <td style="padding:.55rem .75rem;font-weight:700;font-size:.85rem">${escHtml(team.name || 'Unknown')}</td>
+		  <td style="padding:.55rem .75rem;color:var(--muted);font-size:.78rem">${locLabel}</td>
+		  <td style="padding:.55rem .75rem;color:${colour};font-weight:700;font-size:.85rem">${distLabel}</td>
 		</tr>`;
 	}).join('');
 
-	// Update "last updated" clock
-	const upd = el('last-updated');
-	if (upd) upd.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+	// Update inline timestamp
+	const upd = el('lb-updated');
+	if (upd) upd.textContent = new Date().toLocaleTimeString();
+
+	// Also update standalone leaderboard page timestamp if present
+	const upd2 = el('last-updated');
+	if (upd2) upd2.textContent = `Updated ${new Date().toLocaleTimeString()}`;
   }
 
-  /* ── Parse config from URL hash (leaderboard page uses ?game=<b64>) */
+  /* ── Parse config from URL hash (standalone leaderboard page uses ?game=<b64>) */
   function loadConfig() {
 	const params = new URLSearchParams(location.search);
 	const raw    = params.get('game');
@@ -98,28 +101,36 @@ const Leaderboard = (() => {
 	}
   }
 
-  /* ── Boot ────────────────────────────────────────────────────────── */
+  /* ── Start inline leaderboard (called by game.js after Firebase is ready) */
+  function startInline(firebaseConfig, gameId) {
+	if (!firebaseConfig || !gameId) return;
+	FirebaseDB.initAndSubscribe(firebaseConfig, gameId, data => {
+	  lastSnapshot = data;
+	  render(data);
+	});
+	setInterval(() => { if (lastSnapshot) render(lastSnapshot); }, 10_000);
+  }
+
+  /* ── Boot for standalone leaderboard.html ────────────────────────── */
   function init() {
 	const config = loadConfig();
 	if (!config || !config.firebase) {
-	  el('leaderboard-body').innerHTML = `
-		<tr><td colspan="5" style="text-align:center;color:var(--hot);padding:2rem">
+	  const b = el('leaderboard-body');
+	  if (b) b.innerHTML = `
+		<tr><td colspan="4" style="text-align:center;color:var(--hot);padding:2rem">
 		  ⚠️ No game config found in URL. Use the Hunt Master link.
 		</td></tr>`;
 	  return;
 	}
 
-	el('game-title').textContent = config.gameTitle || 'GPS Hunt';
-
-	// Tick the "last seen" timestamps every 10 s without a DB round-trip
-	setInterval(() => {
-	  if (lastSnapshot) render(lastSnapshot);
-	}, 10_000);
+	const title = el('game-title');
+	if (title) title.textContent = config.gameTitle || 'GPS Hunt';
 
 	FirebaseDB.initAndSubscribe(config.firebase, config.gameId, data => {
 	  lastSnapshot = data;
 	  render(data);
 	});
+	setInterval(() => { if (lastSnapshot) render(lastSnapshot); }, 10_000);
   }
 
   let lastSnapshot = null;
@@ -128,7 +139,10 @@ const Leaderboard = (() => {
 	return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  return { init };
+  return { init, startInline };
 })();
 
-document.addEventListener('DOMContentLoaded', Leaderboard.init);
+// Only auto-init on the standalone leaderboard page
+if (document.getElementById('game-title')) {
+  document.addEventListener('DOMContentLoaded', Leaderboard.init);
+}

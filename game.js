@@ -79,6 +79,10 @@ const Game = (() => {
 	  // Initialise Firebase if config present
 	  if (isNew && json.firebase && json.gameId && typeof FirebaseDB !== 'undefined') {
 		firebaseReady = FirebaseDB.init(json.firebase, json.gameId);
+		// Start inline leaderboard on the play screen
+		if (firebaseReady && typeof Leaderboard !== 'undefined') {
+		  Leaderboard.startInline(json.firebase, json.gameId);
+		}
 	  }
 
 	  return locations.length > 0;
