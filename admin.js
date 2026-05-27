@@ -3,6 +3,7 @@
 const Admin = (() => {
   let locations = []; // [{name, lat, lng, clue}]
   let gameId    = null; // generated once per session
+  let joinCode  = null; // short code players need to enter in the lobby
 
   const el = id => document.getElementById(id);
 
@@ -102,6 +103,11 @@ const Admin = (() => {
 	// One stable gameId per admin session
 	if (!gameId) gameId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+	// One stable join code per admin session
+	if (!joinCode) joinCode = Array.from({ length: 5 }, () =>
+	  'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]
+	).join('');
+
 	const firebaseConfig = getFirebaseConfig();
 	const gameTitle      = el('inp-game-title')?.value.trim() || 'GPS Hunt';
 	const base           = location.href.replace(/admin\.html.*$/, '');
@@ -141,8 +147,15 @@ const Admin = (() => {
 		locationCount : locations.length,
 		creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
 		encodedPayload: encoded,
+		joinCode,
 	  });
 	}
+
+	// ── Show join code in output ────────────────────────────────────
+	const codeEl = el('join-code-display');
+	if (codeEl) codeEl.textContent = joinCode;
+	const codeBox = el('join-code-box');
+	if (codeBox) codeBox.style.display = 'flex';
   }
 
   /* ── Copy helpers ─────────────────────────────────────────────────── */

@@ -87,12 +87,13 @@ const FirebaseDB = (() => {
   }
 
   /* ── Subscribe to all lobby games ───────────────────────────────── */
-  function subscribeToGames(callback) {
-	if (!db) return;
-	db.ref('games').orderByChild('createdAt').on('value', snapshot => {
-	  const data = snapshot.val() || {};
-	  callback(data);
-	});
+  function subscribeToGames(callback, errorCallback) {
+	if (!db) { if (errorCallback) errorCallback(new Error('DB not initialised')); return; }
+	db.ref('games').orderByChild('createdAt').on(
+	  'value',
+	  snapshot => { callback(snapshot.val() || {}); },
+	  err     => { if (errorCallback) errorCallback(err); }
+	);
   }
 
   /* ── Initialise from config.js for lobby page ───────────────────── */
