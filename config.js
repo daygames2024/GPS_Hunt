@@ -7,10 +7,10 @@ const GPS_HUNT_CONFIG = {
 	apiKey:      "AIzaSyB4A1-UEtQdJ0W4pdlP2XyeIhZIK1Zq8e8",
 	authDomain:  "gps-hunt-82631.firebaseapp.com",
 	databaseURL: "https://gps-hunt-82631-default-rtdb.firebaseio.com",
-	projectId:   "gps_hunt2024",
+	projectId:   "hunt-master-2025",
   },
   /* Default hunt title shown on the leaderboard */
   defaultGameTitle: "GPS Hunt",
   /* Password for the Manage Games page — change this to something only you know */
-  managePassword: "hunt-master-2025",
+  managePassword: "gps_hunt2024",
 };
