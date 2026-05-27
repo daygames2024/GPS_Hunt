@@ -131,6 +131,18 @@ const Admin = (() => {
 
 	el('output-box').classList.add('visible');
 	el('output-box').scrollIntoView({ behavior: 'smooth' });
+
+	// ── Register game in Firebase lobby ────────────────────────────
+	if (firebaseConfig && typeof FirebaseDB !== 'undefined') {
+	  FirebaseDB.init(firebaseConfig, gameId);
+	  FirebaseDB.registerGame({
+		gameId,
+		gameTitle,
+		locationCount : locations.length,
+		creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
+		encodedPayload: encoded,
+	  });
+	}
   }
 
   /* ── Copy helpers ─────────────────────────────────────────────────── */

@@ -71,5 +71,35 @@ const FirebaseDB = (() => {
 	subscribeToTeams(gId, callback);
   }
 
-  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise };
+  /* ── Register a game in the global lobby ────────────────────────── */
+  function registerGame(gameInfo) {
+	// gameInfo: { gameId, gameTitle, locationCount, creatorName, encodedPayload }
+	if (!db) return;
+	db.ref(`games/${gameInfo.gameId}`).set({
+	  gameId        : gameInfo.gameId,
+	  gameTitle     : gameInfo.gameTitle     || 'GPS Hunt',
+	  locationCount : gameInfo.locationCount || 0,
+	  creatorName   : gameInfo.creatorName   || 'Hunt Master',
+	  encodedPayload: gameInfo.encodedPayload,
+	  createdAt     : firebase.database.ServerValue.TIMESTAMP,
+	  active        : true,
+	});
+  }
+
+  /* ── Subscribe to all lobby games ───────────────────────────────── */
+  function subscribeToGames(callback) {
+	if (!db) return;
+	db.ref('games').orderByChild('createdAt').on('value', snapshot => {
+	  const data = snapshot.val() || {};
+	  callback(data);
+	});
+  }
+
+  /* ── Initialise from config.js for lobby page ───────────────────── */
+  function initFromConfig() {
+	if (typeof GPS_HUNT_CONFIG === 'undefined') return false;
+	return init(GPS_HUNT_CONFIG.firebase, 'lobby');
+  }
+
+  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, subscribeToGames, initFromConfig };
 })();
