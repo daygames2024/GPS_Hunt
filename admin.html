@@ -142,6 +142,7 @@
   loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js')
     .then(() => loadScript('https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js'))
     .then(() => loadScript('config.js'))
+    .then(() => loadScript('firebase.js'))
     .then(() => loadScript('admin.js'))
     .then(() => Admin.init()); // DOMContentLoaded already fired — call init directly
 </script>
