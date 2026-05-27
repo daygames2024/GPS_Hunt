@@ -86,6 +86,21 @@ const FirebaseDB = (() => {
 	});
   }
 
+  /* ── Delete a game fully (lobby entry + all hunt data) ────────────── */
+  function deleteGame(gId) {
+    if (!db) return Promise.reject(new Error('DB not initialised'));
+    return Promise.all([
+      db.ref(`games/${gId}`).remove(),
+      db.ref(`hunts/${gId}`).remove(),
+    ]);
+  }
+
+  /* ── Check a game still exists in the lobby ─────────────────────── */
+  function gameExists(gId, callback) {
+    if (!db) { callback(false); return; }
+    db.ref(`games/${gId}`).once('value', snap => callback(snap.exists()));
+  }
+
   /* ── Subscribe to all lobby games ───────────────────────────────── */
   function subscribeToGames(callback, errorCallback) {
 	if (!db) { if (errorCallback) errorCallback(new Error('DB not initialised')); return; }
@@ -102,5 +117,5 @@ const FirebaseDB = (() => {
 	return init(GPS_HUNT_CONFIG.firebase, 'lobby');
   }
 
-  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, subscribeToGames, initFromConfig };
+  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
 })();

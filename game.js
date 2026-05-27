@@ -272,16 +272,38 @@ const Game = (() => {
   function init() {
 	const hasGame = loadFromHash();
 
-	if (hasGame) {
-	  showScreen('screen-setup');
-	  el('location-count').textContent = locations.length;
-	} else {
-	  showScreen('screen-no-game');
-	}
-
 	// Wire buttons
 	el('start-btn')?.addEventListener('click', startGame);
 	el('claim-btn')?.addEventListener('click', claimLocation);
+
+	if (!hasGame) {
+	  showScreen('screen-no-game');
+	  return;
+	}
+
+	// If Firebase is available, confirm the game hasn't been deleted
+	if (firebaseReady && typeof FirebaseDB !== 'undefined' && typeof gameId !== 'undefined') {
+	  const gId = (() => { try { return JSON.parse(atob(location.hash.slice(1))).gameId; } catch { return null; } })();
+	  if (gId) {
+		FirebaseDB.gameExists(gId, exists => {
+		  if (exists) {
+			showScreen('screen-setup');
+			el('location-count').textContent = locations.length;
+		  } else {
+			const noGame = el('screen-no-game');
+			if (noGame) {
+			  const msg = noGame.querySelector('p');
+			  if (msg) msg.textContent = 'This game has been ended by the Hunt Master.';
+			}
+			showScreen('screen-no-game');
+		  }
+		});
+		return;
+	  }
+	}
+
+	showScreen('screen-setup');
+	el('location-count').textContent = locations.length;
   }
 
   return { init };
