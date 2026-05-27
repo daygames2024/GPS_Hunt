@@ -30,6 +30,10 @@
     <Content Include="index.html" />
     <Content Include="leaderboard.html" />
     <Content Include="leaderboard.js" />
+    <Content Include="lobby.html" />
+    <Content Include="lobby.js" />
+    <Content Include="manage.html" />
+    <Content Include="manage.js" />
     <Content Include="README.md" />
     <Content Include="style.css" />
   </ItemGroup>

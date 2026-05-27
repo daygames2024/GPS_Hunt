@@ -173,87 +173,6 @@ const Admin = (() => {
 	el('output-box').classList.remove('visible');
   }
 
-  /* ── Manage Games — live list with delete ─────────────────────────── */
-  const AGE_ENDED_MS = 24 * 60 * 60 * 1000;
-
-  function fmtAge(ts) {
-    if (!ts) return '—';
-    const ms   = Date.now() - ts;
-    const mins = Math.floor(ms / 60000);
-    if (mins < 1)  return 'just created';
-    if (mins < 60) return `${mins}m ago`;
-    const hrs = Math.floor(mins / 60);
-    if (hrs < 24)  return `${hrs}h ago`;
-    return `${Math.floor(hrs / 24)}d ago`;
-  }
-
-  function renderManageList(data) {
-    const list   = el('manage-game-list');
-    const status = el('manage-status');
-    if (!list) return;
-
-    const games = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-
-    if (status) status.textContent = `${games.length} game${games.length !== 1 ? 's' : ''} in Firebase`;
-
-    if (games.length === 0) {
-      list.innerHTML = '<p style="color:var(--muted);text-align:center;font-size:.85rem">No games registered yet.</p>';
-      return;
-    }
-
-    list.innerHTML = games.map(game => {
-      const ended  = (Date.now() - (game.createdAt || 0)) > AGE_ENDED_MS;
-      const badge  = ended
-        ? '<span style="font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:99px;background:var(--border);color:var(--muted);text-transform:uppercase">Ended</span>'
-        : '<span style="font-size:.7rem;font-weight:700;padding:.2rem .55rem;border-radius:99px;background:#1b5e20;color:#a5d6a7;text-transform:uppercase">Active</span>';
-
-      return `
-        <div style="display:flex;align-items:center;gap:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:.75rem;padding:.85rem 1rem;flex-wrap:wrap">
-          <div style="flex:1;min-width:0">
-            <div style="font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
-              ${escHtml(game.gameTitle || 'GPS Hunt')}
-            </div>
-            <div style="font-size:.75rem;color:var(--muted);margin-top:.2rem">
-              by ${escHtml(game.creatorName || 'Hunt Master')}
-              · 📍 ${game.locationCount || '?'} locations
-              · 🔑 ${escHtml(game.joinCode || '—')}
-              · ${fmtAge(game.createdAt)}
-            </div>
-          </div>
-          ${badge}
-          <button
-            onclick="Admin.deleteGame('${escHtml(game.gameId)}')"
-            title="Remove from lobby"
-            style="background:#b71c1c;color:#fff;border:none;border-radius:.5rem;padding:.45rem .85rem;font-size:.8rem;font-weight:600;cursor:pointer;flex-shrink:0">
-            🗑️ Delete
-          </button>
-        </div>`;
-    }).join('');
-  }
-
-  function deleteGame(gId) {
-    if (!confirm('Delete this game? The link will stop working and all team data will be removed.')) return;
-    FirebaseDB.deleteGame(gId)
-      .catch(err => alert('Could not delete: ' + err.message));
-  }
-
-  function startManageGames() {
-    if (typeof FirebaseDB === 'undefined') return;
-    const ready = FirebaseDB.initFromConfig();
-    if (!ready) {
-      const list = el('manage-game-list');
-      if (list) list.innerHTML = '<p style="color:var(--muted);font-size:.85rem;text-align:center">Firebase not configured.</p>';
-      return;
-    }
-    FirebaseDB.subscribeToGames(
-      data => renderManageList(data),
-      err  => {
-        const list = el('manage-game-list');
-        if (list) list.innerHTML = `<p style="color:#ef5350;font-size:.85rem">Error: ${escHtml(err.message)}</p>`;
-      }
-    );
-  }
-
   /* ── Helpers ──────────────────────────────────────────────────────── */
   function escHtml(str) {
 	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -281,10 +200,9 @@ const Admin = (() => {
 	el('inp-lng')?.addEventListener('keydown', e => { if (e.key === 'Enter') el('inp-clue').focus(); });
 
 	renderList();
-	startManageGames();
   }
 
-  return { init, move, remove, deleteGame };
+  return { init, move, remove };
 })();
 
 document.addEventListener('DOMContentLoaded', () => {}); // init called by admin.html loader

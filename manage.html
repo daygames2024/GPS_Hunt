@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPS Hunt — Manage Games</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+	body { overflow-y: auto; }
+
+	/* ── Shared wrap ─────────────────────────────────────────────── */
+	.mgr-wrap {
+	  max-width: 580px;
+	  margin: 0 auto;
+	  padding: 2rem 1rem 5rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1.5rem;
+	}
+
+	/* ── Login screen ────────────────────────────────────────────── */
+	#screen-login {
+	  min-height: 100dvh;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  justify-content: center;
+	  gap: 1.5rem;
+	  padding: 2rem 1rem;
+	  text-align: center;
+	}
+
+	#screen-login .login-card {
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: 1.25rem;
+	  padding: 2rem 1.5rem;
+	  width: 100%;
+	  max-width: 380px;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1.1rem;
+	}
+
+	#pw-input {
+	  text-align: center;
+	  font-size: 1.1rem;
+	  letter-spacing: .05em;
+	  padding: .75rem;
+	  border-radius: .75rem;
+	  border: 2px solid var(--border);
+	  background: var(--bg);
+	  color: var(--text);
+	  width: 100%;
+	  outline: none;
+	  transition: border-color .2s;
+	}
+	#pw-input:focus { border-color: var(--accent); }
+
+	/* ── Manage screen ───────────────────────────────────────────── */
+	#screen-manage {
+	  display: none;
+	  flex-direction: column;
+	}
+  </style>
+</head>
+<body>
+
+  <!-- ── Login Screen ──────────────────────────────────────────────── -->
+  <div id="screen-login">
+	<div style="font-size:3.5rem">🔐</div>
+	<div class="login-card">
+	  <div>
+		<h1 style="font-size:1.4rem;margin-bottom:.3rem">Manage Games</h1>
+		<p style="font-size:.85rem;color:var(--muted)">Enter the administrator password to continue.</p>
+	  </div>
+	  <form id="pw-form" style="display:flex;flex-direction:column;gap:.85rem" onsubmit="return false">
+		<input
+		  id="pw-input"
+		  type="password"
+		  placeholder="Password"
+		  autocomplete="current-password"
+		  autocorrect="off"
+		  spellcheck="false" />
+		<p id="pw-error" style="color:#ef5350;font-size:.85rem;min-height:1.1em;text-align:center"></p>
+		<button type="submit" class="btn-primary" style="max-width:unset;width:100%">🔓 Sign In</button>
+	  </form>
+	</div>
+	<a href="admin.html" style="color:var(--muted);font-size:.82rem;text-decoration:none">← Back to Hunt Master</a>
+  </div>
+
+  <!-- ── Manage Screen ─────────────────────────────────────────────── -->
+  <div id="screen-manage">
+	<div class="mgr-wrap">
+
+	  <!-- Header -->
+	  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem">
+		<div>
+		  <h1 style="font-size:1.5rem;margin-bottom:.15rem">🗂️ Manage Games</h1>
+		  <span id="manage-status" style="font-size:.78rem;color:var(--muted)">Connecting…</span>
+		</div>
+		<button id="logout-btn" class="btn-secondary"
+		  style="font-size:.8rem;padding:.45rem .9rem;border-radius:.6rem;max-width:unset">
+		  🔒 Sign Out
+		</button>
+	  </div>
+
+	  <!-- Live game list -->
+	  <div id="manage-game-list" style="display:flex;flex-direction:column;gap:.85rem">
+		<p style="color:var(--muted);text-align:center;font-size:.85rem">Loading games…</p>
+	  </div>
+
+	  <!-- Footer nav -->
+	  <div style="display:flex;flex-direction:column;gap:.5rem;padding-top:.5rem;border-top:1px solid var(--border)">
+		<a href="lobby.html"
+		   style="display:block;text-align:center;color:var(--accent);font-size:.85rem;font-weight:600;text-decoration:none">
+		  🗺️ View Player Lobby
+		</a>
+		<a href="admin.html"
+		   style="display:block;text-align:center;color:var(--muted);font-size:.82rem;text-decoration:none">
+		  ← Back to Hunt Master
+		</a>
+	  </div>
+
+	</div>
+  </div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="firebase.js"></script>
+<script src="manage.js"></script>
+</body>
+</html>
