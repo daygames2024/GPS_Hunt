@@ -120,23 +120,16 @@ const Manage = (() => {
 
 	  const hasPin = !!game.creatorPinHash;
 	  const creatorLinkRow = (isDraft || isLive) && hasPin ? `
-		<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding-top:.35rem;border-top:1px solid var(--border)">
-		  <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">🔗 Creator edit link:</span>
-		  <input
-			type="text"
-			readonly
-			onclick="this.select()"
-			value="${escHtml(location.origin + location.pathname.replace(/manage\.html.*$/, '') + 'edit.html?game=' + encodeURIComponent(game.gameId))}"
-			style="flex:1;min-width:0;font-size:.75rem;font-family:monospace;padding:.3rem .6rem;border-radius:.4rem;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+		<div style="padding-top:.35rem;border-top:1px solid var(--border)">
 		  <button
-			class="mgr-copy-link-btn"
+			class="mgr-edit-link-btn"
 			data-id="${escHtml(game.gameId)}"
-			style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:.4rem;padding:.3rem .7rem;font-size:.78rem;cursor:pointer;white-space:nowrap">
-			📋 Copy
+			style="background:#1565c0;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
+			✏️ Edit
 		  </button>
 		</div>` : (isDraft && !hasPin ? `
 		<p style="font-size:.78rem;color:var(--muted);margin:0;padding-top:.35rem;border-top:1px solid var(--border)">
-		  ⚠️ No Creator PIN set — use the Creator Edit Link to add one.
+		  ⚠️ No Creator PIN set — use the creator edit flow to add one.
 		</p>` : '');
 
 	  const completeBtn = (admin && isLive) ? `
@@ -237,15 +230,11 @@ const Manage = (() => {
 	  });
 	});
 
-	// Wire Copy creator-link buttons
-	list.querySelectorAll('.mgr-copy-link-btn').forEach(btn => {
+	// Wire Edit (creator link) buttons
+	list.querySelectorAll('.mgr-edit-link-btn').forEach(btn => {
 	  btn.addEventListener('click', () => {
 		const gId = btn.dataset.id;
-		const url = `${location.origin}${location.pathname.replace(/manage\.html.*$/, '')}edit.html?game=${encodeURIComponent(gId)}`;
-		navigator.clipboard.writeText(url).then(() => {
-		  btn.textContent = '✅ Copied!';
-		  setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
-		});
+		location.href = `edit.html?game=${encodeURIComponent(gId)}`;
 	  });
 	});
 
