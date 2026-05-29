@@ -112,6 +112,9 @@ const Edit = (() => {
 
     if (!gameId) { startSetupScreen(); return; }
 
+    // Always require PIN on fresh page load - clear any leftover session key
+    sessionStorage.removeItem(pinSessionKey());
+
     const pinErrorEl = el('pin-error');
     const ready = FirebaseDB.initFromConfig();
     if (!ready) {
@@ -134,13 +137,8 @@ const Edit = (() => {
         showOnly('screen-pin'); return;
       }
 
-      if (isAuthed()) {
-        populateEditor();
-        showOnly('screen-edit');
-      } else {
-        showOnly('screen-pin');
-        setTimeout(() => el('pin-input')?.focus(), 100);
-      }
+      showOnly('screen-pin');
+      setTimeout(() => el('pin-input')?.focus(), 100);
     }).catch(err => {
       el('pin-error').textContent = 'Could not load game: ' + err.message;
       showOnly('screen-pin');

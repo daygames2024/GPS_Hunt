@@ -96,7 +96,7 @@ const Manage = (() => {
 		  data-payload="${escHtml(game.encodedPayload || '')}"
 		  class="mgr-edit-btn"
 		  style="background:#1565c0;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
-		  ✏️ Edit Draft (Admin)
+		  ✏️ Edit Draft (PIN)
 		</button>
 		<button
 		  data-id="${escHtml(game.gameId)}"
@@ -155,7 +155,6 @@ const Manage = (() => {
 		  <!-- Detail row -->
 		  <div style="display:flex;gap:1.5rem;font-size:.82rem;color:var(--muted);flex-wrap:wrap">
 			<span>📍 ${game.locationCount || '?'} location${game.locationCount !== 1 ? 's' : ''}</span>
-			<span>🔑 Join code: <strong style="color:var(--text);font-family:monospace;letter-spacing:.1em">${escHtml(game.joinCode || '—')}</strong></span>
 			<span>🆔 <span style="font-family:monospace;font-size:.75rem">${escHtml(game.gameId || '—')}</span></span>
 		  </div>
 
