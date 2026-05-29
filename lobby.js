@@ -3,8 +3,6 @@
 const Lobby = (() => {
   const el = id => document.getElementById(id);
 
-  const AGE_ENDED_MS = 24 * 60 * 60 * 1000; // 24 hours
-
   /* ── Format age of game ─────────────────────────────────────────── */
   function fmtAge(ts) {
 	if (!ts) return '';
@@ -86,7 +84,7 @@ const Lobby = (() => {
 	if (!list) return;
 
 	const games = Object.values(data)
-	  .filter(g => g.status !== 'draft')
+	  .filter(g => g.status !== 'draft' && g.status !== 'completed')
 	  .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
 	if (games.length === 0) {
@@ -99,17 +97,13 @@ const Lobby = (() => {
 	}
 
 	list.innerHTML = games.map(game => {
-	  const age   = Date.now() - (game.createdAt || 0);
-	  const ended = age > AGE_ENDED_MS;
-	  const badge = ended
-		? '<span class="game-badge badge-ended">Ended</span>'
-		: '<span class="game-badge badge-active">Active</span>';
+	  const badge = '<span class="game-badge badge-active">Live</span>';
 
 	  // Store game data on the button via data attributes to avoid escaping issues
 	  const dataAttrs = `data-payload="${escAttr(game.encodedPayload)}" data-title="${escAttr(game.gameTitle || 'GPS Hunt')}" data-code="${escAttr(game.joinCode || '')}"`;
 
 	  return `
-		<div class="game-card ${ended ? 'game-card-ended' : ''}">
+		<div class="game-card">
 		  <div class="game-card-header">
 			<div>
 			  <div class="game-card-title">${escHtml(game.gameTitle || 'GPS Hunt')}</div>

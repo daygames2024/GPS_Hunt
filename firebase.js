@@ -131,6 +131,12 @@ const FirebaseDB = (() => {
 	return db.ref(`games/${gameInfo.gameId}`).update(updates);
   }
 
+  /* ── Mark a game as completed (removes it from the player lobby) ─────── */
+  function completeGame(gId) {
+    if (!db) return Promise.resolve();
+    return db.ref(`games/${gId}`).update({ status: 'completed', active: false });
+  }
+
   /* ── Delete a game fully (lobby entry + all hunt data) ────────────── */
   function deleteGame(gId) {
     if (!db) return Promise.reject(new Error('DB not initialised'));
@@ -162,5 +168,5 @@ const FirebaseDB = (() => {
 	return init(GPS_HUNT_CONFIG.firebase, 'lobby');
   }
 
-  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, saveGameDraft, publishGame, updateGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
+  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, saveGameDraft, publishGame, updateGame, completeGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
 })();

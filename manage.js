@@ -3,7 +3,6 @@
 const Manage = (() => {
   const el = id => document.getElementById(id);
   const SESSION_KEY = 'gps_hunt_manage_auth';
-  const AGE_ENDED_MS = 24 * 60 * 60 * 1000;
 
   /* ── Helpers ────────────────────────────────────────────────────── */
   function escHtml(str) {
@@ -78,17 +77,18 @@ const Manage = (() => {
 	}
 
 	list.innerHTML = games.map(game => {
-	  const isDraft = game.status === 'draft';
-	  const ended   = !isDraft && (Date.now() - (game.createdAt || 0)) > AGE_ENDED_MS;
+	  const isDraft     = game.status === 'draft';
+	  const isCompleted = game.status === 'completed';
+	  const isLive      = !isDraft && !isCompleted;
 
 	  const badge = isDraft
 		? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1a237e;color:#90caf9;text-transform:uppercase;letter-spacing:.05em">Draft</span>'
-		: ended
-		  ? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Ended</span>'
-		  : '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1b5e20;color:#a5d6a7;text-transform:uppercase;letter-spacing:.05em">Active</span>';
+		: isCompleted
+		  ? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Completed</span>'
+		  : '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1b5e20;color:#a5d6a7;text-transform:uppercase;letter-spacing:.05em">Live</span>';
 
-	  const borderColor = isDraft ? '#3949ab' : ended ? 'var(--border)' : 'var(--accent)';
-	  const opacity     = ended ? '.6' : '1';
+	  const borderColor = isDraft ? '#3949ab' : isCompleted ? 'var(--border)' : 'var(--accent)';
+	  const opacity     = isCompleted ? '.6' : '1';
 
 	  const editBtn = isDraft ? `
 		<button
@@ -104,6 +104,15 @@ const Manage = (() => {
 		  class="mgr-publish-btn"
 		  style="background:#2e7d32;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
 		  🚀 Publish
+		</button>` : '';
+
+	  const completeBtn = isLive ? `
+		<button
+		  data-id="${escHtml(game.gameId)}"
+		  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
+		  class="mgr-complete-btn"
+		  style="background:#e65100;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
+		  ✅ Mark Completed
 		</button>` : '';
 
 	  return `
@@ -132,6 +141,7 @@ const Manage = (() => {
 		  <!-- Actions -->
 		  <div style="display:flex;gap:.6rem;flex-wrap:wrap">
 			${editBtn}
+			${completeBtn}
 			<button
 			  data-id="${escHtml(game.gameId)}"
 			  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
@@ -182,6 +192,23 @@ const Manage = (() => {
 			alert('Could not publish: ' + err.message);
 			btn.disabled    = false;
 			btn.textContent = '🚀 Publish';
+		  });
+	  });
+	});
+
+	// Wire Mark Completed buttons
+	list.querySelectorAll('.mgr-complete-btn').forEach(btn => {
+	  btn.addEventListener('click', () => {
+		const gId   = btn.dataset.id;
+		const title = btn.dataset.title;
+		if (!confirm(`Mark "${title}" as completed?\n\nIt will be removed from the player lobby but all data will be kept. You can delete it later.`)) return;
+		btn.disabled    = true;
+		btn.textContent = 'Saving…';
+		FirebaseDB.completeGame(gId)
+		  .catch(err => {
+			alert('Could not update game: ' + err.message);
+			btn.disabled    = false;
+			btn.textContent = '✅ Mark Completed';
 		  });
 	  });
 	});
