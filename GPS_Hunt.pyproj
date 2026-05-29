@@ -25,6 +25,8 @@
     <Content Include="admin.html" />
     <Content Include="admin.js" />
     <Content Include="config.js" />
+    <Content Include="edit.html" />
+    <Content Include="edit.js" />
     <Content Include="firebase.js" />
     <Content Include="game.js" />
     <Content Include="index.html" />
