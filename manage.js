@@ -27,12 +27,12 @@ const Manage = (() => {
 
   function showLogin() {
 	el('screen-login').style.display  = 'flex';
-	el('screen-manage').style.display = 'none';
+	el('logout-btn').style.display    = 'none';
   }
 
   function showManage() {
 	el('screen-login').style.display  = 'none';
-	el('screen-manage').style.display = 'flex';
+	el('logout-btn').style.display    = 'inline-block';
   }
 
   function attemptLogin() {
@@ -44,7 +44,7 @@ const Manage = (() => {
 	  sessionStorage.setItem(SESSION_KEY, 'yes');
 	  errorEl.textContent = '';
 	  showManage();
-	  startLiveList();
+	  renderList(_lastData);
 	} else {
 	  errorEl.textContent = '❌ Incorrect password';
 	  el('pw-input').value = '';
@@ -54,29 +54,40 @@ const Manage = (() => {
 
   function logout() {
 	sessionStorage.removeItem(SESSION_KEY);
-	showLogin();
+	el('screen-login').style.display = 'block';
+	el('logout-btn').style.display   = 'none';
+	renderList(_lastData);
   }
+
+  let _lastData = {};
 
   /* ── Render game list ───────────────────────────────────────────── */
   function renderList(data) {
+	_lastData = data || {};
 	const list   = el('manage-game-list');
 	const status = el('manage-status');
 	if (!list) return;
 
+	const admin = isAuthed();
 	const games = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
-	if (status) status.textContent = `${games.length} game${games.length !== 1 ? 's' : ''} in Firebase`;
+	// Without admin: only show drafts
+	const visible = admin ? games : games.filter(g => g.status === 'draft');
 
-	if (games.length === 0) {
+	if (status) status.textContent = admin
+	  ? `${games.length} game${games.length !== 1 ? 's' : ''} in Firebase`
+	  : `${visible.length} draft${visible.length !== 1 ? 's' : ''} awaiting publication`;
+
+	if (visible.length === 0) {
 	  list.innerHTML = `
 		<div style="text-align:center;padding:3rem 1rem;color:var(--muted)">
 		  <div style="font-size:3rem;margin-bottom:.75rem">🗺️</div>
-		  <p>No games registered yet.</p>
+		  <p>${admin ? 'No games registered yet.' : 'No draft games found.'}</p>
 		</div>`;
 	  return;
 	}
 
-	list.innerHTML = games.map(game => {
+	list.innerHTML = visible.map(game => {
 	  const isDraft     = game.status === 'draft';
 	  const isCompleted = game.status === 'completed';
 	  const isLive      = !isDraft && !isCompleted;
@@ -90,7 +101,8 @@ const Manage = (() => {
 	  const borderColor = isDraft ? '#3949ab' : isCompleted ? 'var(--border)' : 'var(--accent)';
 	  const opacity     = isCompleted ? '.6' : '1';
 
-	  const editBtn = isDraft ? `
+	  // Admin-only action buttons
+	  const editBtn = (admin && isDraft) ? `
 		<button
 		  data-id="${escHtml(game.gameId)}"
 		  data-payload="${escHtml(game.encodedPayload || '')}"
@@ -124,10 +136,10 @@ const Manage = (() => {
 		  </button>
 		</div>` : (isDraft && !hasPin ? `
 		<p style="font-size:.78rem;color:var(--muted);margin:0;padding-top:.35rem;border-top:1px solid var(--border)">
-		  ⚠️ No Creator PIN set — open <strong>Edit Draft (Admin)</strong> and add a PIN to enable the creator edit link.
+		  ⚠️ No Creator PIN set — use the Creator Edit Link to add one.
 		</p>` : '');
 
-	  const completeBtn = isLive ? `
+	  const completeBtn = (admin && isLive) ? `
 		<button
 		  data-id="${escHtml(game.gameId)}"
 		  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
@@ -135,6 +147,24 @@ const Manage = (() => {
 		  style="background:#e65100;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
 		  ✅ Mark Completed
 		</button>` : '';
+
+	  const deleteBtn = admin ? `
+		<button
+		  data-id="${escHtml(game.gameId)}"
+		  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
+		  class="mgr-delete-btn"
+		  style="background:#b71c1c;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
+		  🗑️ Delete Game
+		</button>` : '';
+
+	  const detailRow = admin ? `
+		<div style="display:flex;gap:1.5rem;font-size:.82rem;color:var(--muted);flex-wrap:wrap">
+		  <span>📍 ${game.locationCount || '?'} location${game.locationCount !== 1 ? 's' : ''}</span>
+		  <span>🆔 <span style="font-family:monospace;font-size:.75rem">${escHtml(game.gameId || '—')}</span></span>
+		</div>` : `
+		<div style="display:flex;gap:1.5rem;font-size:.82rem;color:var(--muted);flex-wrap:wrap">
+		  <span>📍 ${game.locationCount || '?'} location${game.locationCount !== 1 ? 's' : ''}</span>
+		</div>`;
 
 	  return `
 		<div style="background:var(--bg);border:1px solid ${borderColor};border-radius:.85rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.75rem;opacity:${opacity}">
@@ -152,23 +182,13 @@ const Manage = (() => {
 			${badge}
 		  </div>
 
-		  <!-- Detail row -->
-		  <div style="display:flex;gap:1.5rem;font-size:.82rem;color:var(--muted);flex-wrap:wrap">
-			<span>📍 ${game.locationCount || '?'} location${game.locationCount !== 1 ? 's' : ''}</span>
-			<span>🆔 <span style="font-family:monospace;font-size:.75rem">${escHtml(game.gameId || '—')}</span></span>
-		  </div>
+		  ${detailRow}
 
 		  <!-- Actions -->
 		  <div style="display:flex;gap:.6rem;flex-wrap:wrap">
 			${editBtn}
 			${completeBtn}
-			<button
-			  data-id="${escHtml(game.gameId)}"
-			  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
-			  class="mgr-delete-btn"
-			  style="background:#b71c1c;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
-			  🗑️ Delete Game
-			</button>
+			${deleteBtn}
 		  </div>
 		  ${creatorLinkRow}
 
@@ -270,17 +290,17 @@ const Manage = (() => {
 	// Login form
 	el('pw-form')?.addEventListener('submit', e => { e.preventDefault(); attemptLogin(); });
 	el('logout-btn')?.addEventListener('click', logout);
-
-	// Enter key on password field
 	el('pw-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
 
 	if (isAuthed()) {
 	  showManage();
-	  startLiveList();
 	} else {
 	  showLogin();
 	  setTimeout(() => el('pw-input')?.focus(), 100);
 	}
+
+	// Always start Firebase — non-admins see drafts only
+	startLiveList();
   }
 
   return { init };

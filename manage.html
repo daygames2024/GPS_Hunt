@@ -59,37 +59,26 @@
 
 	/* ── Manage screen ───────────────────────────────────────────── */
 	#screen-manage {
-	  display: none;
+	  display: flex;
 	  flex-direction: column;
+	}
+
+	/* ── Admin login panel ───────────────────────────────────────── */
+	#screen-login {
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: .85rem;
+	  padding: 1rem 1.1rem;
+	  margin-bottom: .5rem;
+	  display: flex;
+	  flex-direction: column;
+	  gap: .65rem;
 	}
   </style>
 </head>
 <body>
 
-  <!-- ── Login Screen ──────────────────────────────────────────────── -->
-  <div id="screen-login">
-	<div style="font-size:3.5rem">🔐</div>
-	<div class="login-card">
-	  <div>
-		<h1 style="font-size:1.4rem;margin-bottom:.3rem">Manage Games</h1>
-		<p style="font-size:.85rem;color:var(--muted)">Enter the administrator password to continue.</p>
-	  </div>
-	  <form id="pw-form" style="display:flex;flex-direction:column;gap:.85rem" onsubmit="return false">
-		<input
-		  id="pw-input"
-		  type="password"
-		  placeholder="Password"
-		  autocomplete="current-password"
-		  autocorrect="off"
-		  spellcheck="false" />
-		<p id="pw-error" style="color:#ef5350;font-size:.85rem;min-height:1.1em;text-align:center"></p>
-		<button type="submit" class="btn-primary" style="max-width:unset;width:100%">🔓 Sign In</button>
-	  </form>
-	</div>
-	<a href="admin.html" style="color:var(--muted);font-size:.82rem;text-decoration:none">← Back to Hunt Master</a>
-  </div>
-
-  <!-- ── Manage Screen ─────────────────────────────────────────────── -->
+  <!-- ── Manage Screen (always visible) ───────────────────────────── -->
   <div id="screen-manage">
 	<div class="mgr-wrap">
 
@@ -100,12 +89,29 @@
 		  <span id="manage-status" style="font-size:.78rem;color:var(--muted)">Connecting…</span>
 		</div>
 		<button id="logout-btn" class="btn-secondary"
-		  style="font-size:.8rem;padding:.45rem .9rem;border-radius:.6rem;max-width:unset">
+		  style="font-size:.8rem;padding:.45rem .9rem;border-radius:.6rem;max-width:unset;display:none">
 		  🔒 Sign Out
 		</button>
 	  </div>
 
-	  <!-- Live game list -->
+	  <!-- Admin login panel (shown when not authed) -->
+	  <div id="screen-login">
+		<p style="font-size:.85rem;color:var(--muted);margin:0">🔐 Admin sign-in to manage all games (publish, delete, complete).</p>
+		<form id="pw-form" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center" onsubmit="return false">
+		  <input
+			id="pw-input"
+			type="password"
+			placeholder="Admin password"
+			autocomplete="current-password"
+			autocorrect="off"
+			spellcheck="false"
+			style="flex:1;min-width:160px" />
+		  <button type="submit" class="btn-primary" style="max-width:unset;white-space:nowrap">🔓 Sign In</button>
+		</form>
+		<p id="pw-error" style="color:#ef5350;font-size:.82rem;min-height:1em;margin:0"></p>
+	  </div>
+
+	  <!-- Game list -->
 	  <div id="manage-game-list" style="display:flex;flex-direction:column;gap:.85rem">
 		<p style="color:var(--muted);text-align:center;font-size:.85rem">Loading games…</p>
 	  </div>
