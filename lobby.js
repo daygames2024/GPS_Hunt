@@ -151,7 +151,7 @@ const Lobby = (() => {
 		  <div style="font-size:2.5rem">⚠️</div>
 		  <p>Firebase not configured.<br>
 		  Ask your Hunt Master for a direct game link, or
-		  <a href="admin.html" style="color:var(--accent)">create your own hunt</a>.</p>
+		  <a href="edit.html" style="color:var(--accent)">create your own hunt</a>.</p>
 		</div>`;
 	  return;
 	}

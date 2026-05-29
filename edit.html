@@ -53,6 +53,47 @@
 </head>
 <body>
 
+<!-- ── New Game Setup Screen ─────────────────────────────────────── -->
+<div id="screen-setup" style="display:none">
+<div class="admin-wrap">
+
+  <div style="text-align:center">
+	<div style="font-size:3rem">🗺️</div>
+	<h1>Create Your Hunt</h1>
+	<p>Fill in your game details and choose a PIN, then start adding locations.</p>
+  </div>
+
+  <div class="card">
+	<h2 style="margin-bottom:1rem">🎮 Game Details</h2>
+	<div class="form-group">
+	  <div>
+		<label for="setup-game-title">Hunt Name <span style="color:#ef5350">*</span></label>
+		<input type="text" id="setup-game-title" placeholder="e.g. Summer Scavenger Hunt 2025" maxlength="60" />
+	  </div>
+	  <div>
+		<label for="setup-creator-name">Your Name / Team <span style="color:#ef5350">*</span></label>
+		<input type="text" id="setup-creator-name" placeholder="e.g. Scott" maxlength="40" />
+	  </div>
+	  <div>
+		<label for="setup-pin">Create a PIN <span style="color:#ef5350">*</span> <span style="font-weight:400;color:var(--muted)">(4–12 digits — you'll need this to edit your game later)</span></label>
+		<input type="password" id="setup-pin" placeholder="e.g. 1234" maxlength="12" inputmode="numeric"
+		  autocomplete="new-password" style="letter-spacing:.2em;font-size:1.1rem" />
+	  </div>
+	  <div>
+		<label for="setup-pin-confirm">Confirm PIN <span style="color:#ef5350">*</span></label>
+		<input type="password" id="setup-pin-confirm" placeholder="Repeat PIN" maxlength="12" inputmode="numeric"
+		  autocomplete="new-password" style="letter-spacing:.2em;font-size:1.1rem" />
+	  </div>
+	  <p id="setup-error" style="color:#ef5350;font-size:.85rem;min-height:1.1em"></p>
+	  <button class="btn-success" id="setup-start-btn" style="max-width:unset;width:100%">➡️ Next: Add Locations</button>
+	</div>
+  </div>
+
+  <a href="lobby.html" style="display:block;text-align:center;color:var(--muted);font-size:.82rem;text-decoration:none">← Back to lobby</a>
+
+</div>
+</div><!-- /screen-setup -->
+
 <!-- ── PIN Screen ────────────────────────────────────────────────── -->
 <div id="screen-pin">
   <div style="font-size:3.5rem">🔑</div>
@@ -88,6 +129,21 @@
 	<div style="font-size:3rem">✏️</div>
 	<h1>Edit <span id="edit-game-title-display">Game</span></h1>
 	<p style="font-size:.85rem">Add, remove or reorder locations, then save your changes.</p>
+  </div>
+
+  <!-- ── Game settings (editable) ──────────────────────────────── -->
+  <div class="card">
+	<h2 style="margin-bottom:1rem">🎮 Game Settings</h2>
+	<div class="form-group">
+	  <div>
+		<label for="edit-game-title">Hunt Name</label>
+		<input type="text" id="edit-game-title" placeholder="e.g. Summer Scavenger Hunt 2025" maxlength="60" />
+	  </div>
+	  <div>
+		<label for="edit-creator-name">Your Name / Team</label>
+		<input type="text" id="edit-creator-name" placeholder="e.g. Scott" maxlength="40" />
+	  </div>
+	</div>
   </div>
 
   <!-- ── Location list ──────────────────────────────────────────── -->
