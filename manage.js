@@ -96,7 +96,7 @@ const Manage = (() => {
 		  data-payload="${escHtml(game.encodedPayload || '')}"
 		  class="mgr-edit-btn"
 		  style="background:#1565c0;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
-		  ✏️ Edit Draft
+		  ✏️ Edit Draft (Admin)
 		</button>
 		<button
 		  data-id="${escHtml(game.gameId)}"
@@ -105,6 +105,27 @@ const Manage = (() => {
 		  style="background:#2e7d32;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
 		  🚀 Publish
 		</button>` : '';
+
+	  const hasPin = !!game.creatorPinHash;
+	  const creatorLinkRow = (isDraft || isLive) && hasPin ? `
+		<div style="display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding-top:.35rem;border-top:1px solid var(--border)">
+		  <span style="font-size:.78rem;color:var(--muted);white-space:nowrap">🔗 Creator edit link:</span>
+		  <input
+			type="text"
+			readonly
+			onclick="this.select()"
+			value="${escHtml(location.origin + location.pathname.replace(/manage\.html.*$/, '') + 'edit.html?game=' + encodeURIComponent(game.gameId))}"
+			style="flex:1;min-width:0;font-size:.75rem;font-family:monospace;padding:.3rem .6rem;border-radius:.4rem;border:1px solid var(--border);background:var(--bg);color:var(--text)" />
+		  <button
+			class="mgr-copy-link-btn"
+			data-id="${escHtml(game.gameId)}"
+			style="background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:.4rem;padding:.3rem .7rem;font-size:.78rem;cursor:pointer;white-space:nowrap">
+			📋 Copy
+		  </button>
+		</div>` : (isDraft && !hasPin ? `
+		<p style="font-size:.78rem;color:var(--muted);margin:0;padding-top:.35rem;border-top:1px solid var(--border)">
+		  ⚠️ No Creator PIN set — open <strong>Edit Draft (Admin)</strong> and add a PIN to enable the creator edit link.
+		</p>` : '');
 
 	  const completeBtn = isLive ? `
 		<button
@@ -150,6 +171,7 @@ const Manage = (() => {
 			  🗑️ Delete Game
 			</button>
 		  </div>
+		  ${creatorLinkRow}
 
 		</div>`;
 	}).join('');
@@ -193,6 +215,18 @@ const Manage = (() => {
 			btn.disabled    = false;
 			btn.textContent = '🚀 Publish';
 		  });
+	  });
+	});
+
+	// Wire Copy creator-link buttons
+	list.querySelectorAll('.mgr-copy-link-btn').forEach(btn => {
+	  btn.addEventListener('click', () => {
+		const gId = btn.dataset.id;
+		const url = `${location.origin}${location.pathname.replace(/manage\.html.*$/, '')}edit.html?game=${encodeURIComponent(gId)}`;
+		navigator.clipboard.writeText(url).then(() => {
+		  btn.textContent = '✅ Copied!';
+		  setTimeout(() => { btn.textContent = '📋 Copy'; }, 2000);
+		});
 	  });
 	});
 

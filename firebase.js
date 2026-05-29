@@ -6,6 +6,18 @@ const FirebaseDB = (() => {
   let gameId  = null;
   let teamKey = null; // sanitised team name used as DB key
 
+  /* ── SHA-256 hash (for creator PIN storage) ─────────────────────── */
+  async function sha256(text) {
+    const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  /* ── Fetch a single game record from Firebase ───────────────────── */
+  function getGame(gId) {
+    if (!db) return Promise.reject(new Error('DB not initialised'));
+    return db.ref(`games/${gId}`).once('value').then(snap => snap.val());
+  }
+
   /* ── Initialise ─────────────────────────────────────────────────── */
   function init(firebaseConfig, gId) {
 	if (!firebaseConfig || !firebaseConfig.apiKey) return false;
@@ -80,10 +92,11 @@ const FirebaseDB = (() => {
 	  gameTitle     : gameInfo.gameTitle     || 'GPS Hunt',
 	  locationCount : gameInfo.locationCount || 0,
 	  creatorName   : gameInfo.creatorName   || 'Hunt Master',
-	  encodedPayload: gameInfo.encodedPayload,
-	  createdAt     : firebase.database.ServerValue.TIMESTAMP,
-	  status        : gameInfo.status        || 'live',
-	  active        : gameInfo.status !== 'draft',
+	  encodedPayload  : gameInfo.encodedPayload,
+	  createdAt       : firebase.database.ServerValue.TIMESTAMP,
+	  status          : gameInfo.status        || 'live',
+	  active          : gameInfo.status !== 'draft',
+	  creatorPinHash  : gameInfo.creatorPinHash || null,
 	});
   }
 
@@ -95,24 +108,26 @@ const FirebaseDB = (() => {
 	return ref.once('value').then(snap => {
 	  const existing = snap.val() || {};
 	  return ref.set({
-		gameId        : gameInfo.gameId,
-		gameTitle     : gameInfo.gameTitle     || 'GPS Hunt',
-		locationCount : gameInfo.locationCount || 0,
-		creatorName   : gameInfo.creatorName   || 'Hunt Master',
-		encodedPayload: gameInfo.encodedPayload,
-		createdAt     : existing.createdAt     || firebase.database.ServerValue.TIMESTAMP,
-		status        : 'draft',
-		active        : false,
+		gameId          : gameInfo.gameId,
+		gameTitle       : gameInfo.gameTitle     || 'GPS Hunt',
+		locationCount   : gameInfo.locationCount || 0,
+		creatorName     : gameInfo.creatorName   || 'Hunt Master',
+		encodedPayload  : gameInfo.encodedPayload,
+		createdAt       : existing.createdAt     || firebase.database.ServerValue.TIMESTAMP,
+		status          : 'draft',
+		active          : false,
+		creatorPinHash  : gameInfo.creatorPinHash || existing.creatorPinHash || null,
 	  });
 	});
   }
 
   /* ── Publish a draft game (flip to live) ─────────────────────────── */
-  function publishGame(gId, encodedPayload, locationCount) {
+  function publishGame(gId, encodedPayload, locationCount, creatorPinHash) {
 	if (!db) return Promise.resolve();
 	const updates = { status: 'live', active: true };
-	if (encodedPayload !== undefined) updates.encodedPayload = encodedPayload;
-	if (locationCount  !== undefined) updates.locationCount  = locationCount;
+	if (encodedPayload  !== undefined) updates.encodedPayload  = encodedPayload;
+	if (locationCount   !== undefined) updates.locationCount   = locationCount;
+	if (creatorPinHash  !== undefined) updates.creatorPinHash  = creatorPinHash;
 	return db.ref(`games/${gId}`).update(updates);
   }
 
@@ -168,5 +183,5 @@ const FirebaseDB = (() => {
 	return init(GPS_HUNT_CONFIG.firebase, 'lobby');
   }
 
-  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, saveGameDraft, publishGame, updateGame, completeGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
+  return { init, sha256, getGame, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, saveGameDraft, publishGame, updateGame, completeGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
 })();

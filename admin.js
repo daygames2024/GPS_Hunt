@@ -182,29 +182,20 @@ const Admin = (() => {
 	// ── Register game in Firebase lobby ────────────────────────────
 	if (firebaseConfig && typeof FirebaseDB !== 'undefined') {
 	  FirebaseDB.init(firebaseConfig, gameId);
-	  if (isDraft) {
-		// Promote existing draft to live
-		FirebaseDB.publishGame(gameId, encoded, locations.length).then(() => {
-		  FirebaseDB.updateGame({
-			gameId,
-			gameTitle,
-			locationCount : locations.length,
-			creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
-			encodedPayload: encoded,
+	  const pin          = el('inp-creator-pin')?.value.trim();
+	  const creatorName  = el('inp-creator-name')?.value.trim() || 'Hunt Master';
+	  const doRegister   = (pinHash) => {
+		if (isDraft) {
+		  FirebaseDB.publishGame(gameId, encoded, locations.length, pinHash || undefined).then(() => {
+			FirebaseDB.updateGame({ gameId, gameTitle, locationCount: locations.length, creatorName, encodedPayload: encoded });
+			isDraft = false;
 		  });
-		  isDraft = false;
-		});
-	  } else {
-		FirebaseDB.registerGame({
-		  gameId,
-		  gameTitle,
-		  locationCount : locations.length,
-		  creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
-		  encodedPayload: encoded,
-		  joinCode,
-		  status        : 'live',
-		});
-	  }
+		} else {
+		  FirebaseDB.registerGame({ gameId, gameTitle, locationCount: locations.length, creatorName, encodedPayload: encoded, joinCode, status: 'live', creatorPinHash: pinHash || null });
+		}
+		if (pinHash) showCreatorLink(base, gameId);
+	  };
+	  if (pin) { FirebaseDB.sha256(pin).then(doRegister); } else { doRegister(null); }
 	}
 
 	// ── Show join code in output ────────────────────────────────────
@@ -227,6 +218,15 @@ const Admin = (() => {
 
   function hideOutput() {
 	el('output-box').classList.remove('visible');
+  }
+
+  /* ── Show the creator-only edit link in the output box ───────────── */
+  function showCreatorLink(base, gId) {
+	const editUrl  = `${base}edit.html?game=${encodeURIComponent(gId)}`;
+	const urlInput = el('creator-edit-url');
+	const linkBox  = el('creator-link-box');
+	if (urlInput) urlInput.value = editUrl;
+	if (linkBox)  linkBox.style.display = 'flex';
   }
 
   /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -298,23 +298,35 @@ const Admin = (() => {
 
     const gameTitle   = el('inp-game-title')?.value.trim() || 'GPS Hunt';
     const creatorName = el('inp-creator-name')?.value.trim() || 'Hunt Master';
+    const pin         = el('inp-creator-pin')?.value.trim();
     const base        = location.href.replace(/admin\.html.*$/, '');
     const payload     = { locations, gameId, gameTitle, joinCode, firebase: firebaseConfig };
     const encoded     = btoa(JSON.stringify(payload));
 
     FirebaseDB.init(firebaseConfig, gameId);
-    FirebaseDB.saveGameDraft({
-      gameId,
-      gameTitle,
-      locationCount : locations.length,
-      creatorName,
-      encodedPayload: encoded,
-      joinCode,
-    }).then(() => {
-      isDraft = true;
-      const btn = el('draft-btn');
-      if (btn) { btn.textContent = '✅ Draft Saved!'; setTimeout(() => { btn.textContent = '💾 Save as Draft'; }, 2500); }
-    }).catch(err => alert('Could not save draft: ' + err.message));
+
+    const doSave = (pinHash) => {
+      FirebaseDB.saveGameDraft({
+        gameId,
+        gameTitle,
+        locationCount : locations.length,
+        creatorName,
+        encodedPayload: encoded,
+        joinCode,
+        creatorPinHash: pinHash,
+      }).then(() => {
+        isDraft = true;
+        const btn = el('draft-btn');
+        if (btn) { btn.textContent = '✅ Draft Saved!'; setTimeout(() => { btn.textContent = '💾 Save as Draft'; }, 2500); }
+        if (pinHash) showCreatorLink(base, gameId);
+      }).catch(err => alert('Could not save draft: ' + err.message));
+    };
+
+    if (pin) {
+      FirebaseDB.sha256(pin).then(doSave);
+    } else {
+      doSave(null);
+    }
   }
 
   /* ── Load a draft for editing (called from manage.html link) ─────── */
@@ -380,6 +392,16 @@ const Admin = (() => {
 		const btn = el('copy-lb-btn');
 		btn.textContent = '✅ Copied!';
 		setTimeout(() => { btn.textContent = '📋 Copy Leaderboard Link'; }, 2000);
+	  });
+	});
+
+	el('copy-creator-btn')?.addEventListener('click', () => {
+	  const val = el('creator-edit-url')?.value;
+	  if (!val) return;
+	  navigator.clipboard.writeText(val).then(() => {
+		const btn = el('copy-creator-btn');
+		btn.textContent = '✅ Copied!';
+		setTimeout(() => { btn.textContent = '📋 Copy Creator Edit Link'; }, 2000);
 	  });
 	});
 

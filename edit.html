@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GPS Hunt — Edit Game</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+	body { background: var(--bg); overflow-y: auto; }
+	h1 span { color: var(--accent); }
+
+	/* ── PIN screen ──────────────────────────────────────────────── */
+	#screen-pin {
+	  min-height: 100dvh;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  justify-content: center;
+	  gap: 1.5rem;
+	  padding: 2rem 1rem;
+	  text-align: center;
+	}
+	#screen-pin .login-card {
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: 1.25rem;
+	  padding: 2rem 1.5rem;
+	  width: 100%;
+	  max-width: 380px;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1.1rem;
+	}
+	#pin-input {
+	  text-align: center;
+	  font-size: 1.4rem;
+	  letter-spacing: .25em;
+	  font-family: monospace;
+	  padding: .75rem;
+	  border-radius: .75rem;
+	  border: 2px solid var(--border);
+	  background: var(--bg);
+	  color: var(--text);
+	  width: 100%;
+	  outline: none;
+	  transition: border-color .2s;
+	}
+	#pin-input:focus { border-color: var(--accent); }
+
+	/* ── Editor screen ───────────────────────────────────────────── */
+	#screen-edit { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ── PIN Screen ────────────────────────────────────────────────── -->
+<div id="screen-pin">
+  <div style="font-size:3.5rem">🔑</div>
+  <div class="login-card">
+	<div>
+	  <h1 style="font-size:1.4rem;margin-bottom:.3rem">Edit Your Game</h1>
+	  <p id="pin-game-title" style="font-size:.9rem;font-weight:600;color:var(--accent)"></p>
+	  <p style="font-size:.85rem;color:var(--muted)">Enter your Creator PIN to edit this game's locations.</p>
+	</div>
+	<form id="pin-form" style="display:flex;flex-direction:column;gap:.85rem" onsubmit="return false">
+	  <input
+		id="pin-input"
+		type="password"
+		inputmode="numeric"
+		placeholder="PIN"
+		maxlength="12"
+		autocomplete="current-password"
+		autocorrect="off"
+		spellcheck="false" />
+	  <p id="pin-error" style="color:#ef5350;font-size:.85rem;min-height:1.1em;text-align:center"></p>
+	  <button type="submit" class="btn-primary" style="max-width:unset;width:100%">🔓 Unlock</button>
+	</form>
+  </div>
+  <a href="lobby.html" style="color:var(--muted);font-size:.82rem;text-decoration:none">← Back to lobby</a>
+</div>
+
+<!-- ── Edit Screen ───────────────────────────────────────────────── -->
+<div id="screen-edit">
+<div class="admin-wrap">
+
+  <!-- Header -->
+  <div style="text-align:center">
+	<div style="font-size:3rem">✏️</div>
+	<h1>Edit <span id="edit-game-title-display">Game</span></h1>
+	<p style="font-size:.85rem">Add, remove or reorder locations, then save your changes.</p>
+  </div>
+
+  <!-- ── Location list ──────────────────────────────────────────── -->
+  <div>
+	<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.75rem">
+	  <h2 style="margin:0">📍 Locations</h2>
+	  <button class="btn-secondary" id="edit-import-btn" style="font-size:.82rem;padding:.45rem .9rem;max-width:unset">📂 Import Locations</button>
+	  <input type="file" id="edit-import-input" accept=".csv,.json" style="display:none" />
+	</div>
+	<p style="font-size:.78rem;color:var(--muted);margin-top:-.4rem;margin-bottom:.75rem">
+	  Import a <strong>CSV</strong> (columns: name, lat, lng, clue) or <strong>JSON</strong> file ([{name, lat, lng, clue}, …]) to bulk-add locations.
+	</p>
+	<div id="edit-location-list"></div>
+  </div>
+
+  <!-- ── Add location form ──────────────────────────────────────── -->
+  <div class="card">
+	<h2 style="margin-bottom:1rem">➕ Add Location</h2>
+	<div class="form-group">
+	  <div>
+		<label for="edit-inp-name">Location Name</label>
+		<input type="text" id="edit-inp-name" placeholder="e.g. The Old Lighthouse" maxlength="60" />
+	  </div>
+	  <div class="row">
+		<div>
+		  <label for="edit-inp-lat">Latitude</label>
+		  <input type="number" id="edit-inp-lat" placeholder="51.5074" step="any" min="-90" max="90" />
+		</div>
+		<div>
+		  <label for="edit-inp-lng">Longitude</label>
+		  <input type="number" id="edit-inp-lng" placeholder="-0.1278" step="any" min="-180" max="180" />
+		</div>
+	  </div>
+	  <button class="btn-secondary" id="edit-gps-btn" style="max-width:unset">📡 Use My GPS</button>
+	  <div>
+		<label for="edit-inp-clue">Clue (shown to teams)</label>
+		<textarea id="edit-inp-clue" placeholder="Look for something that hasn't moved in 200 years…"></textarea>
+	  </div>
+	  <button class="btn-primary" id="edit-add-btn" style="max-width:unset">➕ Add Location</button>
+	</div>
+  </div>
+
+  <!-- ── Actions ────────────────────────────────────────────────── -->
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+	<button class="btn-secondary" id="edit-draft-btn" style="flex:1;min-width:160px">💾 Save Changes</button>
+	<button class="btn-success"   id="edit-publish-btn" style="flex:2;min-width:200px">🚀 Save &amp; Publish</button>
+  </div>
+
+  <p style="font-size:.78rem;color:var(--muted);text-align:center">
+	<strong>Save Changes</strong> keeps the game as a draft. <strong>Save &amp; Publish</strong> makes it live for players.
+  </p>
+
+  <!-- Sign out -->
+  <div style="text-align:center;padding-top:.5rem;border-top:1px solid var(--border)">
+	<button id="edit-logout-btn" class="btn-secondary"
+	  style="font-size:.8rem;padding:.45rem .9rem;border-radius:.6rem;max-width:unset">
+	  🔒 Sign Out
+	</button>
+  </div>
+
+</div>
+</div><!-- /screen-edit -->
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="firebase.js"></script>
+<script src="edit.js"></script>
+</body>
+</html>

@@ -98,6 +98,11 @@
 		<label for="inp-creator-name">Your Name / Team (shown in lobby)</label>
 		<input type="text" id="inp-creator-name" placeholder="e.g. Scott" maxlength="40" />
 	  </div>
+	  <div>
+		<label for="inp-creator-pin">Creator PIN <span style="font-weight:400;color:var(--muted)">(4–12 digits — share this with the game creator so they can edit their own game)</span></label>
+		<input type="password" id="inp-creator-pin" placeholder="e.g. 1234" maxlength="12" autocomplete="new-password"
+		  style="letter-spacing:.2em;font-size:1.1rem" />
+	  </div>
 	</div>
   </div>
 
@@ -205,6 +210,19 @@
 	<p style="font-size:.8rem;color:var(--muted)">
 	  ⚠️ Regenerate the link any time you add, remove or reorder locations.
 	</p>
+
+	<!-- Creator edit link — shown when a PIN was set -->
+	<div id="creator-link-box" style="display:none;flex-direction:column;gap:.75rem;border-top:1px solid var(--border);padding-top:1.5rem;margin-top:.5rem">
+	  <h2>✏️ Creator Edit Link</h2>
+	  <p style="max-width:unset;font-size:.85rem">
+		Share this private link with the game creator. They will need their PIN to make any changes — they cannot access any other games or admin pages.
+	  </p>
+	  <div>
+		<label>Creator Edit URL (tap to select all)</label>
+		<input type="text" id="creator-edit-url" readonly onclick="this.select()" />
+	  </div>
+	  <button class="btn-secondary" id="copy-creator-btn" style="max-width:unset;width:100%">📋 Copy Creator Edit Link</button>
+	</div>
   </div>
 
   <!-- Back links -->
