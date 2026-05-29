@@ -85,7 +85,9 @@ const Lobby = (() => {
 	const list = el('game-list');
 	if (!list) return;
 
-	const games = Object.values(data).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+	const games = Object.values(data)
+	  .filter(g => g.status !== 'draft')
+	  .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
 	if (games.length === 0) {
 	  list.innerHTML = `

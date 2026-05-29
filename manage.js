@@ -78,13 +78,36 @@ const Manage = (() => {
 	}
 
 	list.innerHTML = games.map(game => {
-	  const ended = (Date.now() - (game.createdAt || 0)) > AGE_ENDED_MS;
-	  const badge = ended
-		? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Ended</span>'
-		: '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1b5e20;color:#a5d6a7;text-transform:uppercase;letter-spacing:.05em">Active</span>';
+	  const isDraft = game.status === 'draft';
+	  const ended   = !isDraft && (Date.now() - (game.createdAt || 0)) > AGE_ENDED_MS;
+
+	  const badge = isDraft
+		? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1a237e;color:#90caf9;text-transform:uppercase;letter-spacing:.05em">Draft</span>'
+		: ended
+		  ? '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:var(--border);color:var(--muted);text-transform:uppercase;letter-spacing:.05em">Ended</span>'
+		  : '<span style="font-size:.7rem;font-weight:700;padding:.25rem .6rem;border-radius:99px;background:#1b5e20;color:#a5d6a7;text-transform:uppercase;letter-spacing:.05em">Active</span>';
+
+	  const borderColor = isDraft ? '#3949ab' : ended ? 'var(--border)' : 'var(--accent)';
+	  const opacity     = ended ? '.6' : '1';
+
+	  const editBtn = isDraft ? `
+		<button
+		  data-id="${escHtml(game.gameId)}"
+		  data-payload="${escHtml(game.encodedPayload || '')}"
+		  class="mgr-edit-btn"
+		  style="background:#1565c0;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
+		  ✏️ Edit Draft
+		</button>
+		<button
+		  data-id="${escHtml(game.gameId)}"
+		  data-payload="${escHtml(game.encodedPayload || '')}"
+		  class="mgr-publish-btn"
+		  style="background:#2e7d32;color:#fff;border:none;border-radius:.5rem;padding:.5rem 1rem;font-size:.82rem;font-weight:600;cursor:pointer">
+		  🚀 Publish
+		</button>` : '';
 
 	  return `
-		<div style="background:var(--bg);border:1px solid ${ended ? 'var(--border)' : 'var(--accent)'};border-radius:.85rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.75rem;opacity:${ended ? '.6' : '1'}">
+		<div style="background:var(--bg);border:1px solid ${borderColor};border-radius:.85rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.75rem;opacity:${opacity}">
 
 		  <!-- Title row -->
 		  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem">
@@ -108,6 +131,7 @@ const Manage = (() => {
 
 		  <!-- Actions -->
 		  <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+			${editBtn}
 			<button
 			  data-id="${escHtml(game.gameId)}"
 			  data-title="${escHtml(game.gameTitle || 'GPS Hunt')}"
@@ -133,6 +157,31 @@ const Manage = (() => {
 			alert('Could not delete: ' + err.message);
 			btn.disabled    = false;
 			btn.textContent = '🗑️ Delete Game';
+		  });
+	  });
+	});
+
+	// Wire Edit Draft buttons
+	list.querySelectorAll('.mgr-edit-btn').forEach(btn => {
+	  btn.addEventListener('click', () => {
+		const enc = btn.dataset.payload;
+		if (!enc) { alert('Draft data is missing. Cannot edit.'); return; }
+		location.href = `admin.html?edit=${encodeURIComponent(enc)}`;
+	  });
+	});
+
+	// Wire Publish buttons (promote draft to live without opening admin)
+	list.querySelectorAll('.mgr-publish-btn').forEach(btn => {
+	  btn.addEventListener('click', () => {
+		const gId = btn.dataset.id;
+		if (!confirm('Publish this draft? It will become visible to players immediately.')) return;
+		btn.disabled    = true;
+		btn.textContent = 'Publishing…';
+		FirebaseDB.publishGame(gId)
+		  .catch(err => {
+			alert('Could not publish: ' + err.message);
+			btn.disabled    = false;
+			btn.textContent = '🚀 Publish';
 		  });
 	  });
 	});

@@ -1,11 +1,52 @@
 /* ── GPS Hunt — Admin / Hunt Master Logic ─────────────────────────── */
 
 const Admin = (() => {
-  let locations = []; // [{name, lat, lng, clue}]
-  let gameId    = null; // generated once per session
-  let joinCode  = null; // short code players need to enter in the lobby
+  let locations  = []; // [{name, lat, lng, clue}]
+  let gameId     = null; // generated once per session
+  let joinCode   = null; // short code players need to enter in the lobby
+  let isDraft    = false; // true when editing an existing draft
+  let draftTitle = null;  // pre-filled title when resuming a draft
 
   const el = id => document.getElementById(id);
+  const SESSION_KEY = 'gps_hunt_manage_auth'; // shared with manage.js
+
+  /* ── Password gate ──────────────────────────────────────────────── */
+  function isAuthed() {
+    return sessionStorage.getItem(SESSION_KEY) === 'yes';
+  }
+
+  function showLogin() {
+    el('screen-login').style.display = 'flex';
+    el('screen-admin').style.display = 'none';
+  }
+
+  function showAdmin() {
+    el('screen-login').style.display = 'none';
+    el('screen-admin').style.display = 'block';
+  }
+
+  function attemptLogin() {
+    const pw      = el('admin-pw-input')?.value || '';
+    const correct = (typeof GPS_HUNT_CONFIG !== 'undefined' && GPS_HUNT_CONFIG.managePassword) || '';
+    const errorEl = el('admin-pw-error');
+    if (pw === correct) {
+      sessionStorage.setItem(SESSION_KEY, 'yes');
+      errorEl.textContent = '';
+      showAdmin();
+      wireAdminListeners();
+      loadDraftFromUrl();
+      renderList();
+    } else {
+      errorEl.textContent = '❌ Incorrect password';
+      el('admin-pw-input').value = '';
+      el('admin-pw-input').focus();
+    }
+  }
+
+  function logout() {
+    sessionStorage.removeItem(SESSION_KEY);
+    showLogin();
+  }
 
   /* ── Render location list ─────────────────────────────────────────── */
   function renderList() {
@@ -141,14 +182,29 @@ const Admin = (() => {
 	// ── Register game in Firebase lobby ────────────────────────────
 	if (firebaseConfig && typeof FirebaseDB !== 'undefined') {
 	  FirebaseDB.init(firebaseConfig, gameId);
-	  FirebaseDB.registerGame({
-		gameId,
-		gameTitle,
-		locationCount : locations.length,
-		creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
-		encodedPayload: encoded,
-		joinCode,
-	  });
+	  if (isDraft) {
+		// Promote existing draft to live
+		FirebaseDB.publishGame(gameId, encoded, locations.length).then(() => {
+		  FirebaseDB.updateGame({
+			gameId,
+			gameTitle,
+			locationCount : locations.length,
+			creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
+			encodedPayload: encoded,
+		  });
+		  isDraft = false;
+		});
+	  } else {
+		FirebaseDB.registerGame({
+		  gameId,
+		  gameTitle,
+		  locationCount : locations.length,
+		  creatorName   : el('inp-creator-name')?.value.trim() || 'Hunt Master',
+		  encodedPayload: encoded,
+		  joinCode,
+		  status        : 'live',
+		});
+	  }
 	}
 
 	// ── Show join code in output ────────────────────────────────────
@@ -178,12 +234,144 @@ const Admin = (() => {
 	return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
+  /* ── Import locations from CSV or JSON file ──────────────────────── */
+  function importFile(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const text = e.target.result.trim();
+      let imported = [];
+      try {
+        if (file.name.toLowerCase().endsWith('.json') || text.startsWith('[') || text.startsWith('{')) {
+          const parsed = JSON.parse(text);
+          imported = (Array.isArray(parsed) ? parsed : [parsed]).map(row => ({
+            name: String(row.name || row.Name || row.title || '').trim(),
+            lat : parseFloat(row.lat  || row.Lat  || row.latitude  || 0),
+            lng : parseFloat(row.lng  || row.Lng  || row.longitude || row.lon || 0),
+            clue: String(row.clue || row.Clue || row.hint || '').trim(),
+          }));
+        } else {
+          // CSV — first row may be a header
+          const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+          const firstLow = lines[0].toLowerCase();
+          const hasHeader = firstLow.includes('name') || firstLow.includes('lat') || firstLow.includes('lng');
+          const dataLines = hasHeader ? lines.slice(1) : lines;
+          imported = dataLines.map(line => {
+            const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+            return {
+              name: cols[0] || '',
+              lat : parseFloat(cols[1]),
+              lng : parseFloat(cols[2]),
+              clue: cols[3] || '',
+            };
+          });
+        }
+        const valid = imported.filter(r =>
+          r.name && !isNaN(r.lat) && !isNaN(r.lng) &&
+          r.lat >= -90 && r.lat <= 90 && r.lng >= -180 && r.lng <= 180
+        );
+        if (valid.length === 0) { alert('No valid locations found in the file.\n\nCSV format: name, lat, lng, clue\nJSON format: [{name, lat, lng, clue}, …]'); return; }
+        const skipped = imported.length - valid.length;
+        const msg = `Import ${valid.length} location${valid.length !== 1 ? 's' : ''}${skipped ? ` (${skipped} skipped — invalid coords)` : ''}?`;
+        if (!confirm(msg)) return;
+        locations = [...locations, ...valid];
+        renderList();
+        hideOutput();
+      } catch (err) {
+        alert('Could not parse file: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  /* ── Save current state as a draft in Firebase ───────────────────── */
+  function saveAsDraft() {
+    const firebaseConfig = getFirebaseConfig();
+    if (!firebaseConfig) {
+      alert('Firebase is not configured in config.js.\nCannot save draft without a Firebase connection.');
+      return;
+    }
+    if (!gameId) gameId = Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    if (!joinCode) joinCode = Array.from({ length: 5 }, () =>
+      'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'[Math.floor(Math.random() * 32)]
+    ).join('');
+
+    const gameTitle   = el('inp-game-title')?.value.trim() || 'GPS Hunt';
+    const creatorName = el('inp-creator-name')?.value.trim() || 'Hunt Master';
+    const base        = location.href.replace(/admin\.html.*$/, '');
+    const payload     = { locations, gameId, gameTitle, joinCode, firebase: firebaseConfig };
+    const encoded     = btoa(JSON.stringify(payload));
+
+    FirebaseDB.init(firebaseConfig, gameId);
+    FirebaseDB.saveGameDraft({
+      gameId,
+      gameTitle,
+      locationCount : locations.length,
+      creatorName,
+      encodedPayload: encoded,
+      joinCode,
+    }).then(() => {
+      isDraft = true;
+      const btn = el('draft-btn');
+      if (btn) { btn.textContent = '✅ Draft Saved!'; setTimeout(() => { btn.textContent = '💾 Save as Draft'; }, 2500); }
+    }).catch(err => alert('Could not save draft: ' + err.message));
+  }
+
+  /* ── Load a draft for editing (called from manage.html link) ─────── */
+  function loadDraftFromUrl() {
+    const params = new URLSearchParams(location.search);
+    const enc    = params.get('edit');
+    if (!enc) return;
+    try {
+      const data = JSON.parse(atob(enc));
+      if (Array.isArray(data.locations)) locations = data.locations;
+      if (data.gameId)   gameId   = data.gameId;
+      if (data.joinCode) joinCode = data.joinCode;
+      isDraft    = true;
+      draftTitle = data.gameTitle || null;
+      if (draftTitle && el('inp-game-title')) el('inp-game-title').value = draftTitle;
+      if (data.creatorName && el('inp-creator-name')) el('inp-creator-name').value = data.creatorName;
+      renderList();
+      const banner = el('draft-edit-banner');
+      if (banner) banner.style.display = 'flex';
+    } catch (e) {
+      console.warn('Could not load draft from URL', e);
+    }
+  }
+
   /* ── Init ─────────────────────────────────────────────────────────── */
   function init() {
+	// Password gate
+	el('admin-pw-form')?.addEventListener('submit', e => { e.preventDefault(); attemptLogin(); });
+	el('admin-pw-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
+	el('admin-logout-btn')?.addEventListener('click', logout);
+
+	if (!isAuthed()) {
+	  showLogin();
+	  setTimeout(() => el('admin-pw-input')?.focus(), 100);
+	  return;
+	}
+	showAdmin();
+	wireAdminListeners();
+
+	renderList();
+	loadDraftFromUrl();
+  }
+
+  /* ── Wire all admin content listeners (called after auth) ─────────── */
+  function wireAdminListeners() {
 	el('add-btn')?.addEventListener('click', addLocation);
 	el('gps-btn')?.addEventListener('click', useMyLocation);
 	el('generate-btn')?.addEventListener('click', generate);
 	el('copy-btn')?.addEventListener('click', copyUrl);
+	el('draft-btn')?.addEventListener('click', saveAsDraft);
+
+	// Import file input (hidden)
+	const importInput = el('import-file-input');
+	if (importInput) {
+	  importInput.addEventListener('change', e => { importFile(e.target.files[0]); importInput.value = ''; });
+	}
+	el('import-btn')?.addEventListener('click', () => el('import-file-input')?.click());
 
 	el('copy-lb-btn')?.addEventListener('click', () => {
 	  const val = el('lb-url')?.value;
@@ -198,8 +386,6 @@ const Admin = (() => {
 	// Allow Enter in lat/lng to advance to next field
 	el('inp-lat')?.addEventListener('keydown', e => { if (e.key === 'Enter') el('inp-lng').focus(); });
 	el('inp-lng')?.addEventListener('keydown', e => { if (e.key === 'Enter') el('inp-clue').focus(); });
-
-	renderList();
   }
 
   return { init, move, remove };

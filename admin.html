@@ -8,10 +8,75 @@
   <style>
 	body { background: var(--bg); overflow-y: auto; }
 	h1 span { color: var(--accent); }
+
+	/* ── Login screen ────────────────────────────────────────────── */
+	#screen-login {
+	  min-height: 100dvh;
+	  display: flex;
+	  flex-direction: column;
+	  align-items: center;
+	  justify-content: center;
+	  gap: 1.5rem;
+	  padding: 2rem 1rem;
+	  text-align: center;
+	}
+	#screen-login .login-card {
+	  background: var(--surface);
+	  border: 1px solid var(--border);
+	  border-radius: 1.25rem;
+	  padding: 2rem 1.5rem;
+	  width: 100%;
+	  max-width: 380px;
+	  display: flex;
+	  flex-direction: column;
+	  gap: 1.1rem;
+	}
+	#admin-pw-input {
+	  text-align: center;
+	  font-size: 1.1rem;
+	  letter-spacing: .05em;
+	  padding: .75rem;
+	  border-radius: .75rem;
+	  border: 2px solid var(--border);
+	  background: var(--bg);
+	  color: var(--text);
+	  width: 100%;
+	  outline: none;
+	  transition: border-color .2s;
+	}
+	#admin-pw-input:focus { border-color: var(--accent); }
+
+	/* ── Admin screen ────────────────────────────────────────────── */
+	#screen-admin { display: none; }
   </style>
 </head>
 <body>
 
+<!-- ── Login Screen ──────────────────────────────────────────────── -->
+<div id="screen-login">
+  <div style="font-size:3.5rem">🔐</div>
+  <div class="login-card">
+	<div>
+	  <h1 style="font-size:1.4rem;margin-bottom:.3rem">Hunt Master</h1>
+	  <p style="font-size:.85rem;color:var(--muted)">Enter the administrator password to build or edit a hunt.</p>
+	</div>
+	<form id="admin-pw-form" style="display:flex;flex-direction:column;gap:.85rem" onsubmit="return false">
+	  <input
+		id="admin-pw-input"
+		type="password"
+		placeholder="Password"
+		autocomplete="current-password"
+		autocorrect="off"
+		spellcheck="false" />
+	  <p id="admin-pw-error" style="color:#ef5350;font-size:.85rem;min-height:1.1em;text-align:center"></p>
+	  <button type="submit" class="btn-primary" style="max-width:unset;width:100%">🔓 Sign In</button>
+	</form>
+  </div>
+  <a href="lobby.html" style="color:var(--muted);font-size:.82rem;text-decoration:none">← Back to player view</a>
+</div>
+
+<!-- ── Admin Screen ───────────────────────────────────────────────── -->
+<div id="screen-admin">
 <div class="admin-wrap">
 
   <!-- Header -->
@@ -38,7 +103,14 @@
 
   <!-- ── Location list ──────────────────────────────────────────────── -->
   <div>
-	<h2 style="margin-bottom:.75rem">📍 Locations</h2>
+	<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:.75rem">
+	  <h2 style="margin:0">📍 Locations</h2>
+	  <button class="btn-secondary" id="import-btn" style="font-size:.82rem;padding:.45rem .9rem;max-width:unset">📂 Import Locations</button>
+	  <input type="file" id="import-file-input" accept=".csv,.json" style="display:none" />
+	</div>
+	<p style="font-size:.78rem;color:var(--muted);margin-top:-.4rem;margin-bottom:.75rem">
+	  Import a <strong>CSV</strong> (columns: name, lat, lng, clue) or <strong>JSON</strong> file ([{name, lat, lng, clue}, …]) to bulk-add locations.
+	</p>
 	<div id="location-list"></div>
   </div>
 
@@ -74,8 +146,18 @@
 	</div>
   </div>
 
+  <!-- ── Draft edit banner (shown when resuming a draft) ──────────── -->
+  <div id="draft-edit-banner"
+       style="display:none;align-items:center;gap:.75rem;background:#1a237e22;border:1px solid #3949ab;border-radius:.85rem;padding:.9rem 1.1rem;font-size:.88rem;color:var(--text)">
+    <span style="font-size:1.4rem">✏️</span>
+    <span><strong>Editing a draft.</strong> Add or adjust locations, then click <strong>🚀 Publish Game</strong> to make it live.</span>
+  </div>
+
   <!-- ── Generate ───────────────────────────────────────────────────── -->
-  <button class="btn-success" id="generate-btn" style="max-width:unset;width:100%">🔗 Generate Team Link & QR Code</button>
+  <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+    <button class="btn-secondary" id="draft-btn" style="flex:1;min-width:160px">💾 Save as Draft</button>
+    <button class="btn-success"   id="generate-btn" style="flex:2;min-width:200px">🚀 Publish Game &amp; Get Link</button>
+  </div>
 
   <!-- ── Output ─────────────────────────────────────────────────────── -->
   <div id="output-box">
@@ -126,16 +208,23 @@
   </div>
 
   <!-- Back links -->
-  <a href="manage.html"
-	 style="display:block;text-align:center;color:var(--accent);font-size:.9rem;font-weight:600;text-decoration:none;margin-top:1rem">
-	🗂️ Manage Active Games
-  </a>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.75rem;margin-top:1rem">
+	<a href="manage.html"
+	   style="color:var(--accent);font-size:.9rem;font-weight:600;text-decoration:none">
+	  🗂️ Manage Active Games
+	</a>
+	<button id="admin-logout-btn" class="btn-secondary"
+	  style="font-size:.8rem;padding:.45rem .9rem;border-radius:.6rem;max-width:unset">
+	  🔒 Sign Out
+	</button>
+  </div>
   <a href="lobby.html"
 	 style="display:block;text-align:center;color:var(--muted);font-size:.85rem;text-decoration:none;margin-top:.5rem">
 	← Back to player view
   </a>
 
 </div>
+</div><!-- /screen-admin -->
 
 <!-- Firebase SDK (compat v9) — only needed for leaderboard link generation -->
 <script>

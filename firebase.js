@@ -73,7 +73,7 @@ const FirebaseDB = (() => {
 
   /* ── Register a game in the global lobby ────────────────────────── */
   function registerGame(gameInfo) {
-	// gameInfo: { gameId, gameTitle, locationCount, creatorName, encodedPayload }
+	// gameInfo: { gameId, gameTitle, locationCount, creatorName, encodedPayload, status? }
 	if (!db) return;
 	db.ref(`games/${gameInfo.gameId}`).set({
 	  gameId        : gameInfo.gameId,
@@ -82,8 +82,53 @@ const FirebaseDB = (() => {
 	  creatorName   : gameInfo.creatorName   || 'Hunt Master',
 	  encodedPayload: gameInfo.encodedPayload,
 	  createdAt     : firebase.database.ServerValue.TIMESTAMP,
-	  active        : true,
+	  status        : gameInfo.status        || 'live',
+	  active        : gameInfo.status !== 'draft',
 	});
+  }
+
+  /* ── Save / overwrite a draft game ──────────────────────────────── */
+  function saveGameDraft(gameInfo) {
+	// Same shape as registerGame but preserves createdAt if already set
+	if (!db) return Promise.resolve();
+	const ref = db.ref(`games/${gameInfo.gameId}`);
+	return ref.once('value').then(snap => {
+	  const existing = snap.val() || {};
+	  return ref.set({
+		gameId        : gameInfo.gameId,
+		gameTitle     : gameInfo.gameTitle     || 'GPS Hunt',
+		locationCount : gameInfo.locationCount || 0,
+		creatorName   : gameInfo.creatorName   || 'Hunt Master',
+		encodedPayload: gameInfo.encodedPayload,
+		createdAt     : existing.createdAt     || firebase.database.ServerValue.TIMESTAMP,
+		status        : 'draft',
+		active        : false,
+	  });
+	});
+  }
+
+  /* ── Publish a draft game (flip to live) ─────────────────────────── */
+  function publishGame(gId, encodedPayload, locationCount) {
+	if (!db) return Promise.resolve();
+	const updates = { status: 'live', active: true };
+	if (encodedPayload !== undefined) updates.encodedPayload = encodedPayload;
+	if (locationCount  !== undefined) updates.locationCount  = locationCount;
+	return db.ref(`games/${gId}`).update(updates);
+  }
+
+  /* ── Update mutable fields of an existing game ───────────────────── */
+  function updateGame(gameInfo) {
+	if (!db) return Promise.resolve();
+	const updates = {};
+	if (gameInfo.gameTitle     !== undefined) updates.gameTitle      = gameInfo.gameTitle;
+	if (gameInfo.locationCount !== undefined) updates.locationCount  = gameInfo.locationCount;
+	if (gameInfo.creatorName   !== undefined) updates.creatorName    = gameInfo.creatorName;
+	if (gameInfo.encodedPayload!== undefined) updates.encodedPayload = gameInfo.encodedPayload;
+	if (gameInfo.status        !== undefined) {
+	  updates.status = gameInfo.status;
+	  updates.active = gameInfo.status !== 'draft';
+	}
+	return db.ref(`games/${gameInfo.gameId}`).update(updates);
   }
 
   /* ── Delete a game fully (lobby entry + all hunt data) ────────────── */
@@ -117,5 +162,5 @@ const FirebaseDB = (() => {
 	return init(GPS_HUNT_CONFIG.firebase, 'lobby');
   }
 
-  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
+  return { init, registerTeam, pushUpdate, initAndSubscribe, sanitise, registerGame, saveGameDraft, publishGame, updateGame, deleteGame, gameExists, subscribeToGames, initFromConfig };
 })();
