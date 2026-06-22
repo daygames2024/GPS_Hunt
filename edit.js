@@ -73,7 +73,7 @@ const Edit = (() => {
     FirebaseDB.sha256(pin).then(pinHash => {
       const firebaseConfig = typeof GPS_HUNT_CONFIG !== 'undefined' ? GPS_HUNT_CONFIG.firebase : null;
       const payload = { locations: [], gameId, gameTitle: title, joinCode, ...(firebaseConfig ? { firebase: firebaseConfig } : {}) };
-      const encoded = btoa(JSON.stringify(payload));
+      const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
 
       gameRecord = {
         gameId,
@@ -167,20 +167,13 @@ const Edit = (() => {
 
   function logout() {
     sessionStorage.removeItem(pinSessionKey());
-    if (isNewGame) {
-      location.href = 'lobby.html';
-    } else {
-      el('pin-input').value = '';
-      el('pin-error').textContent = '';
-      showOnly('screen-pin');
-      setTimeout(() => el('pin-input')?.focus(), 100);
-    }
+    location.href = 'lobby.html';
   }
 
   /* Populate editor from game record */
   function populateEditor() {
     try {
-      const payload = JSON.parse(atob(gameRecord.encodedPayload));
+      const payload = JSON.parse(decodeURIComponent(escape(atob(gameRecord.encodedPayload))));
       locations = Array.isArray(payload.locations) ? payload.locations : [];
     } catch (e) {
       locations = [];
@@ -317,8 +310,8 @@ const Edit = (() => {
 
   /* Build updated encoded payload */
   function buildPayload(meta) {
-    const existing = JSON.parse(atob(gameRecord.encodedPayload));
-    return btoa(JSON.stringify({ ...existing, locations, gameTitle: meta.gameTitle }));
+    const existing = JSON.parse(decodeURIComponent(escape(atob(gameRecord.encodedPayload))));
+    return btoa(unescape(encodeURIComponent(JSON.stringify({ ...existing, locations, gameTitle: meta.gameTitle }))));
   }
 
   /* Save as draft */
