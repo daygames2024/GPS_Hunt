@@ -380,14 +380,16 @@ const Game = (() => {
       return;
     }
 
+    // Show setup screen immediately — async Firebase check may override it
+    showScreen('screen-setup');
+    el('location-count').textContent = locations.length;
+    wireInvite();
+
     if (firebaseReady && typeof FirebaseDB !== 'undefined') {
       const gId = (() => { try { return JSON.parse(atob(location.hash.slice(1))).gameId; } catch { return null; } })();
       if (gId) {
         FirebaseDB.gameExists(gId, exists => {
-          if (exists) {
-            showScreen('screen-setup');
-            el('location-count').textContent = locations.length;
-          } else {
+          if (!exists) {
             const noGame = el('screen-no-game');
             if (noGame) {
               const msg = noGame.querySelector('p');
@@ -395,17 +397,10 @@ const Game = (() => {
             }
             showScreen('screen-no-game');
           }
+          // if exists — setup screen is already showing, nothing to do
         });
-
-        // Wire invite after firebase check too
-        wireInvite();
-        return;
       }
     }
-
-    showScreen('screen-setup');
-    el('location-count').textContent = locations.length;
-    wireInvite();
   }
 
   /* â”€â”€ Invite button wiring â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
