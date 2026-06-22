@@ -304,6 +304,44 @@ const Game = (() => {
 
 	showScreen('screen-setup');
 	el('location-count').textContent = locations.length;
+
+	/* ── Invite button ─────────────────────────────────────────── */
+	const inviteBtn   = el('invite-btn');
+	const inviteModal = el('invite-modal');
+	const inviteUrl   = el('invite-url');
+	const inviteCopy  = el('invite-copy');
+	const inviteShare = el('invite-share');
+	const inviteClose = el('invite-close');
+
+	if (inviteBtn && inviteModal) {
+	  inviteBtn.addEventListener('click', () => {
+		inviteUrl.value = location.href;
+		inviteModal.style.display = 'flex';
+		setTimeout(() => inviteUrl.select(), 100);
+	  });
+
+	  inviteClose.addEventListener('click', () => { inviteModal.style.display = 'none'; });
+	  inviteModal.addEventListener('click', e => { if (e.target === inviteModal) inviteModal.style.display = 'none'; });
+
+	  inviteCopy.addEventListener('click', () => {
+		navigator.clipboard.writeText(inviteUrl.value).then(() => {
+		  inviteCopy.textContent = 'Copied!';
+		  setTimeout(() => { inviteCopy.textContent = '📋 Copy Link'; }, 2000);
+		});
+	  });
+
+	  inviteShare.addEventListener('click', () => {
+		if (navigator.share) {
+		  navigator.share({ title: 'Join my GPS Hunt!', url: inviteUrl.value })
+			.catch(() => {});
+		} else {
+		  navigator.clipboard.writeText(inviteUrl.value).then(() => {
+			inviteShare.textContent = 'Copied!';
+			setTimeout(() => { inviteShare.textContent = '🔗 Share'; }, 2000);
+		  });
+		}
+	  });
+	}
   }
 
   return { init };

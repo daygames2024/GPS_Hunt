@@ -50,6 +50,7 @@
 	<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px">
 	  <span id="gps-status">GPS…</span>
 	  <span style="font-size:.85rem;color:var(--muted)" id="location-counter">1 / ?</span>
+	  <button id="invite-btn" style="font-size:.78rem;padding:.3rem .75rem;border-radius:.5rem;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">📨 Invite</button>
 	</div>
 
 	<h2 id="location-name">Location</h2>
@@ -132,6 +133,23 @@
 	<p>📸 Screenshot these results and share with your Hunt Master.</p>
 	<button class="btn-secondary" onclick="location.reload()">🔄 Play Again</button>
   </section>
+
+  <!-- ── Invite Modal ─────────────────────────────────────────────── -->
+  <div id="invite-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;width:100%;max-width:420px;display:flex;flex-direction:column;gap:1rem">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <h2 style="margin:0;font-size:1.1rem">📨 Invite to this Hunt</h2>
+        <button id="invite-close" style="background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1">&times;</button>
+      </div>
+      <p style="margin:0;font-size:.85rem;color:var(--muted)">Share this link — anyone who opens it will join the same hunt.</p>
+      <input id="invite-url" type="text" readonly onclick="this.select()"
+        style="width:100%;font-size:.75rem;font-family:monospace;padding:.5rem .7rem;border-radius:.5rem;border:1px solid var(--border);background:var(--bg);color:var(--text);box-sizing:border-box" />
+      <div style="display:flex;gap:.6rem">
+        <button id="invite-copy" class="btn-secondary" style="flex:1;max-width:unset">📋 Copy Link</button>
+        <button id="invite-share" class="btn-primary"  style="flex:1;max-width:unset">🔗 Share</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Firebase SDK (compat v9) — loaded conditionally; safe if no config present -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
