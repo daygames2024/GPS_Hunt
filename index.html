@@ -50,7 +50,19 @@
 	<div style="display:flex;justify-content:space-between;align-items:center;width:100%;max-width:420px">
 	  <span id="gps-status">GPS…</span>
 	  <span style="font-size:.85rem;color:var(--muted)" id="location-counter">1 / ?</span>
-	  <button id="invite-btn" style="font-size:.78rem;padding:.3rem .75rem;border-radius:.5rem;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">📨 Invite</button>
+	  <div style="display:flex;gap:.4rem">
+		<button id="waypoints-btn" style="font-size:.78rem;padding:.3rem .75rem;border-radius:.5rem;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">📍 Waypoints</button>
+		<button id="invite-btn" style="font-size:.78rem;padding:.3rem .75rem;border-radius:.5rem;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer">📨 Invite</button>
+	  </div>
+	</div>
+
+	<!-- Waypoint panel -->
+	<div id="waypoint-panel" style="display:none;width:100%;max-width:420px;background:var(--surface);border:1px solid var(--border);border-radius:.75rem;overflow:hidden">
+	  <div style="display:flex;justify-content:space-between;align-items:center;padding:.6rem .9rem;border-bottom:1px solid var(--border)">
+		<span style="font-weight:700;font-size:.9rem">📍 All Waypoints</span>
+		<button id="waypoint-panel-close" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;line-height:1">&times;</button>
+	  </div>
+	  <div id="waypoint-list" style="display:flex;flex-direction:column;gap:0;padding:.4rem .5rem;max-height:280px;overflow-y:auto"></div>
 	</div>
 
 	<h2 id="location-name">Location</h2>
