@@ -94,23 +94,6 @@
 		</button>
 	  </div>
 
-	  <!-- Admin login panel (shown when not authed) -->
-	  <div id="screen-login">
-		<p style="font-size:.85rem;color:var(--muted);margin:0">🔐 Admin sign-in to manage all games (publish, delete, complete).</p>
-		<form id="pw-form" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center" onsubmit="return false">
-		  <input
-			id="pw-input"
-			type="password"
-			placeholder="Admin password"
-			autocomplete="current-password"
-			autocorrect="off"
-			spellcheck="false"
-			style="flex:1;min-width:160px" />
-		  <button type="submit" class="btn-primary" style="max-width:unset;white-space:nowrap">🔓 Sign In</button>
-		</form>
-		<p id="pw-error" style="color:#ef5350;font-size:.82rem;min-height:1em;margin:0"></p>
-	  </div>
-
 	  <!-- Game list -->
 	  <div id="manage-game-list" style="display:flex;flex-direction:column;gap:.85rem">
 		<p style="color:var(--muted);text-align:center;font-size:.85rem">Loading games…</p>
@@ -122,10 +105,29 @@
 		   style="display:block;text-align:center;color:var(--accent);font-size:.85rem;font-weight:600;text-decoration:none">
 		  🗺️ Back to Lobby
 		</a>
-		<a href="admin.html"
-		   style="display:block;text-align:center;color:var(--muted);font-size:.72rem;text-decoration:none">
-		  🔑 Admin (Hunt Master only)
-		</a>
+
+		<!-- Admin sign-in toggle (collapsed by default) -->
+		<button id="admin-toggle"
+		  style="background:none;border:none;color:var(--muted);font-size:.78rem;cursor:pointer;text-align:center;padding:.25rem 0">
+		  🔐 Admin Sign In
+		</button>
+
+		<!-- Admin login panel -->
+		<div id="screen-login" style="display:none">
+		  <form id="pw-form" style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center" onsubmit="return false">
+			<input
+			  id="pw-input"
+			  type="password"
+			  placeholder="Admin password"
+			  autocomplete="current-password"
+			  autocorrect="off"
+			  spellcheck="false"
+			  style="flex:1;min-width:160px" />
+			<button type="submit" class="btn-primary" style="max-width:unset;white-space:nowrap">🔓 Sign In</button>
+		  </form>
+		  <p id="pw-error" style="color:#ef5350;font-size:.82rem;min-height:1em;margin:.25rem 0 0"></p>
+		</div>
+
 	  </div>
 
 	</div>

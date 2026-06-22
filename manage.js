@@ -26,12 +26,13 @@ const Manage = (() => {
   }
 
   function showLogin() {
-	el('screen-login').style.display  = 'flex';
-	el('logout-btn').style.display    = 'none';
+	// login panel stays hidden until toggled — nothing to show
+	el('logout-btn').style.display = 'none';
   }
 
   function showManage() {
 	el('screen-login').style.display  = 'none';
+	el('admin-toggle').style.display  = 'none';
 	el('logout-btn').style.display    = 'inline-block';
   }
 
@@ -54,7 +55,8 @@ const Manage = (() => {
 
   function logout() {
 	sessionStorage.removeItem(SESSION_KEY);
-	el('screen-login').style.display = 'block';
+	el('screen-login').style.display = 'none';
+	el('admin-toggle').style.display = 'block';
 	el('logout-btn').style.display   = 'none';
 	renderList(_lastData);
   }
@@ -281,11 +283,19 @@ const Manage = (() => {
 	el('logout-btn')?.addEventListener('click', logout);
 	el('pw-input')?.addEventListener('keydown', e => { if (e.key === 'Enter') attemptLogin(); });
 
+	// Admin toggle
+	el('admin-toggle')?.addEventListener('click', () => {
+	  const panel = el('screen-login');
+	  if (!panel) return;
+	  const isOpen = panel.style.display !== 'none';
+	  panel.style.display = isOpen ? 'none' : 'flex';
+	  if (!isOpen) setTimeout(() => el('pw-input')?.focus(), 50);
+	});
+
 	if (isAuthed()) {
 	  showManage();
 	} else {
 	  showLogin();
-	  setTimeout(() => el('pw-input')?.focus(), 100);
 	}
 
 	// Always start Firebase — non-admins see drafts only
