@@ -204,7 +204,7 @@ const Game = (() => {
 
   /* GPS position handler */
   function onPosition(pos) {
-    lastPos = pos;
+    lastPos = pos.coords;
     const status = el('gps-status');
     if (status) { status.textContent = 'GPS OK'; status.className = 'ok'; }
 
